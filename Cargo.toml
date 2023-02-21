@@ -1,7 +1,13 @@
 [workspace]
 members = [
     "node",
-    "pallets/template",
+    "pallets/poa",
+    "pallets/poa/rpc",
+    "pallets/token_migration",
+    "pallets/core_mods",
+    "pallets/core_mods/rpc",
+    "pallets/staking_rewards",
+    "pallets/staking_rewards/rpc",
     "runtime",
 ]
 [profile.release]

@@ -1,6 +1,28 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-// `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
+#![cfg_attr(not(feature = "std"), feature(alloc_error_handler))]
 #![recursion_limit = "256"]
+
+#[cfg(not(feature = "std"))]
+mod wasm_handlers {
+	#[panic_handler]
+	#[no_mangle]
+	pub fn panic(info: &core::panic::PanicInfo) -> ! {
+		unsafe {
+			let message = sp_std::alloc::format!("{}", info);
+			log::error!("{}", message);
+			// logging::log(LogLevel::Error, "runtime", message.as_bytes());
+			core::arch::wasm32::unreachable();
+		}
+	}
+
+	#[alloc_error_handler]
+	pub fn oom(_: core::alloc::Layout) -> ! {
+		log::error!("Runtime memory exhausted. Aborting");
+		unsafe {
+			core::arch::wasm32::unreachable();
+		}
+	}
+}
 
 // Make the WASM binary available.
 #[cfg(feature = "std")]
@@ -8,6 +30,13 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 mod weights;
 
+pub use core_mods::{
+	accumulator, anchor, attest, bbs_plus, blob, did, keys_and_sigs, master, revoke,
+};
+pub use poa;
+pub use token_migration;
+
+use core_mods::util::IncId;
 use frame_system::EnsureRoot;
 use pallet_grandpa::{
 	fg_primitives, AuthorityId as GrandpaId, AuthorityList as GrandpaAuthorityList,
@@ -18,11 +47,13 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, NumberFor, One, Verify,
+		AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, IdentifyAccount, NumberFor,
+		One, Verify,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, MultiSignature, Percent,
 };
+use sp_std::collections::btree_map::BTreeMap;
 // Polkadot imports
 use polkadot_runtime_common::prod_or_fast;
 
@@ -53,9 +84,6 @@ use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter, Multiplier
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
-
-/// Import the template pallet.
-pub use pallet_template;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -559,9 +587,105 @@ impl pallet_sudo::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 }
 
-/// Configure the pallet-template in pallets/template.
-impl pallet_template::Config for Runtime {
+parameter_types! {
+	// 8KB
+	pub const MaxBlobSize: u32 = 8192;
+	pub const StorageWeight: Weight = Weight::from_ref_time(1100);
+	// 128 bytes, for large labels, hash of a label can be used
+	pub const LabelMaxSize: u32 = 128;
+	pub const LabelPerByteWeight: Weight = Weight::from_ref_time(10);
+	// 16KB
+	pub const ParamsMaxSize: u32 = 65536;
+	pub const ParamsPerByteWeight: Weight = Weight::from_ref_time(10);
+	pub const PublicKeyMaxSize: u32 = 256;
+	pub const PublicKeyPerByteWeight: Weight = Weight::from_ref_time(10);
+	pub const AccumulatorParamsMaxSize: u32 = 512;
+	pub const AccumulatorParamsPerByteWeight: Weight = Weight::from_ref_time(10);
+	pub const AccumulatedMaxSize: u32 = 128;
+	pub const AccumulatedPerByteWeight: Weight = Weight::from_ref_time(10);
+	pub const MaxDidDocRefSize: u16 = 1024;
+	pub const DidDocRefPerByteWeight: Weight = Weight::from_ref_time(10);
+	pub const MaxServiceEndpointIdSize: u16 = 1024;
+	pub const ServiceEndpointIdPerByteWeight: Weight = Weight::from_ref_time(10);
+	pub const MaxServiceEndpointOrigins: u16 = 64;
+	pub const MaxServiceEndpointOriginSize: u16 = 1025;
+	pub const ServiceEndpointOriginPerByteWeight: Weight = Weight::from_ref_time(10);
+	pub const MaxControllers: u32 = 15;
+}
+
+impl did::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type MaxDidDocRefSize = MaxDidDocRefSize;
+	type DidDocRefPerByteWeight = DidDocRefPerByteWeight;
+	type MaxServiceEndpointIdSize = MaxServiceEndpointIdSize;
+	type ServiceEndpointIdPerByteWeight = ServiceEndpointIdPerByteWeight;
+	type MaxServiceEndpointOrigins = MaxServiceEndpointOrigins;
+	type MaxServiceEndpointOriginSize = MaxServiceEndpointOriginSize;
+	type ServiceEndpointOriginPerByteWeight = ServiceEndpointOriginPerByteWeight;
+}
+
+impl revoke::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type MaxControllers = MaxControllers;
+}
+
+impl bbs_plus::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type LabelMaxSize = LabelMaxSize;
+	type LabelPerByteWeight = LabelPerByteWeight;
+	type ParamsMaxSize = ParamsMaxSize;
+	type ParamsPerByteWeight = ParamsPerByteWeight;
+	type PublicKeyMaxSize = PublicKeyMaxSize;
+	type PublicKeyPerByteWeight = PublicKeyPerByteWeight;
+}
+
+impl accumulator::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type LabelMaxSize = LabelMaxSize;
+	type LabelPerByteWeight = LabelPerByteWeight;
+	type ParamsMaxSize = AccumulatorParamsMaxSize;
+	type ParamsPerByteWeight = AccumulatorParamsPerByteWeight;
+	type PublicKeyMaxSize = PublicKeyMaxSize;
+	type PublicKeyPerByteWeight = PublicKeyPerByteWeight;
+	type AccumulatedMaxSize = AccumulatedMaxSize;
+	type AccumulatedPerByteWeight = AccumulatedPerByteWeight;
+}
+
+impl blob::Config for Runtime {
+	type MaxBlobSize = MaxBlobSize;
+	type StorageWeight = StorageWeight;
+}
+
+impl poa::Config for Runtime {
+	type Currency = Balances;
+}
+
+parameter_types! {
+	/// Number of vesting milestones
+	pub const VestingMilestones: u8 = 3;
+	/// Vesting duration in number of blocks. Duration is 183 days and block time is 3 sec. (183 * 24 * 3600) / 3 = 5270400
+	pub const VestingDuration: u32 = 5270400;
+}
+
+impl token_migration::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type BlockNumberToBalance = ConvertInto;
+	type VestingMilestones = VestingMilestones;
+	type VestingDuration = VestingDuration;
+}
+
+impl master::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+}
+
+impl anchor::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+}
+
+impl attest::Config for Runtime {
+	type StorageWeight = StorageWeight;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -584,7 +708,6 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 100,
 
-
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 14,
 		Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 15,
 		TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 16,
@@ -594,8 +717,17 @@ construct_runtime!(
 		Bounties: pallet_bounties::{Pallet, Call, Storage, Event<T>} = 34,
 		ChildBounties: pallet_child_bounties = 38,
 
-		// Include the custom logic from the pallet-template in the runtime.
-		TemplatePallet: pallet_template::{Pallet, Call, Storage, Event<T>}  = 50,
+		// DID
+		PoAModule: poa::{Pallet, Call, Storage, Config<T>} = 40,
+		BbsPlus: bbs_plus::{Pallet, Call, Storage, Event} = 41,
+		DIDModule: did::{Pallet, Call, Storage, Event, Config} = 42,
+		Revoke: revoke::{Pallet, Call, Storage, Event} = 43,
+		BlobStore: blob::{Pallet, Call, Storage} = 44,
+		Master: master::{Pallet, Call, Storage, Event<T>, Config} = 45,
+		MigrationModule: token_migration::{Pallet, Call, Storage, Event<T>} = 46,
+		Anchor: anchor::{Pallet, Call, Storage, Event<T>} = 47,
+		Attest: attest::{Pallet, Call, Storage} = 48,
+		Accumulator: accumulator::{Pallet, Call, Storage, Event} = 49,
 	}
 );
 
@@ -642,7 +774,6 @@ mod benches {
 		[frame_system, SystemBench::<Runtime>]
 		[pallet_balances, Balances]
 		[pallet_timestamp, Timestamp]
-		[pallet_template, TemplateModule]
 	);
 }
 
@@ -811,6 +942,48 @@ impl_runtime_apis! {
 			len: u32,
 		) -> Balance {
 			TransactionPayment::length_to_fee(len)
+		}
+	}
+
+	impl poa::runtime_api::PoAApi<Block, AccountId, Balance> for Runtime {
+		fn get_treasury_account() -> AccountId {
+			PoAModule::treasury_account()
+		}
+
+		fn get_treasury_balance() -> Balance {
+			PoAModule::treasury_balance()
+		}
+	}
+
+	impl core_mods::runtime_api::CoreModsApi<Block, Runtime> for Runtime {
+		fn did_details(did: did::Did, params: Option<did::AggregatedDidDetailsRequestParams>) -> Option<did::AggregatedDidDetailsResponse<Runtime>> {
+			DIDModule::aggregate_did_details(&did, params.unwrap_or_default())
+		}
+
+		fn did_list_details(dids: Vec<did::Did>, params: Option<did::AggregatedDidDetailsRequestParams>) -> Vec<Option<did::AggregatedDidDetailsResponse<Runtime>>> {
+			let params = params.unwrap_or_default();
+
+			dids.into_iter().map(|did| DIDModule::aggregate_did_details(&did, params)).collect()
+		}
+
+		fn bbs_plus_public_key_with_params(id: bbs_plus::BBSPlusPublicKeyStorageKey) -> Option<bbs_plus::BBSPlusPublicKeyWithParams> {
+			BbsPlus::get_public_key_with_params(&id)
+		}
+
+		fn bbs_plus_params_by_did(owner: bbs_plus::BBSPlusParamsOwner) -> BTreeMap<IncId, bbs_plus::BBSPlusParameters> {
+			BbsPlus::get_params_by_did(&owner)
+		}
+
+		fn bbs_plus_public_keys_by_did(did: did::Did) -> BTreeMap<IncId, bbs_plus::BBSPlusPublicKeyWithParams> {
+			BbsPlus::get_public_key_by_did(&did)
+		}
+
+		fn accumulator_public_key_with_params(id: accumulator::AccumPublicKeyStorageKey) -> Option<accumulator::AccumPublicKeyWithParams> {
+			Accumulator::get_public_key_with_params(&id)
+		}
+
+		fn accumulator_with_public_key_and_params(id: accumulator::AccumulatorId) -> Option<(Vec<u8>, Option<accumulator::AccumPublicKeyWithParams>)> {
+			Accumulator::get_accumulator_with_public_key_and_params(&id)
 		}
 	}
 

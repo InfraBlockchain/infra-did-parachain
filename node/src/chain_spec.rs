@@ -1,6 +1,10 @@
 use node_template_runtime::{
-	AccountId, AuraConfig, BalancesConfig, CouncilConfig, DemocracyConfig, GenesisConfig,
-	GrandpaConfig, Signature, SudoConfig, SystemConfig, TechnicalCommitteeConfig, WASM_BINARY,
+	did::{Did, DidKey},
+	keys_and_sigs::PublicKey,
+	master::Membership,
+	AccountId, AuraConfig, Balance, BalancesConfig, CouncilConfig, DIDModuleConfig,
+	DemocracyConfig, GenesisConfig, GrandpaConfig, Hash, MasterConfig, PoAModuleConfig, Signature,
+	SudoConfig, SystemConfig, TechnicalCommitteeConfig, UNIT, WASM_BINARY,
 };
 use sc_service::ChainType;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
@@ -36,6 +40,12 @@ pub fn authority_keys_from_seed(s: &str) -> (AuraId, GrandpaId) {
 	(get_from_seed::<AuraId>(s), get_from_seed::<GrandpaId>(s))
 }
 
+/// Create a non-secure development did with specified secret key
+fn did_from_seed(did: &[u8; 32], seed: &[u8; 32]) -> (Did, DidKey) {
+	let pk = sr25519::Pair::from_seed(seed).public().0;
+	(Did(*did), DidKey::new_with_all_relationships(PublicKey::sr25519(pk)))
+}
+
 pub fn development_config() -> Result<ChainSpec, String> {
 	let wasm_binary = WASM_BINARY.ok_or_else(|| "Development wasm not available".to_string())?;
 
@@ -60,6 +70,35 @@ pub fn development_config() -> Result<ChainSpec, String> {
 					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
 				],
 				true,
+				Membership {
+					members: [
+						b"Alice\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+						b"Bob\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+						b"Charlie\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+					]
+					.iter()
+					.map(|d| Did(**d))
+					.collect(),
+					vote_requirement: 2,
+				},
+				[
+					(
+						b"Alice\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+						b"Alicesk\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+					),
+					(
+						b"Bob\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+						b"Bobsk\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+					),
+					(
+						b"Charlie\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+						b"Charliesk\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+					),
+				]
+				.iter()
+				.map(|(name, sk)| did_from_seed(name, sk))
+				.collect(),
+				Hash::repeat_byte(42),
 			)
 		},
 		// Bootnodes
@@ -108,6 +147,35 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
 				],
 				true,
+				Membership {
+					members: [
+						b"Alice\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+						b"Bob\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+						b"Charlie\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+					]
+					.iter()
+					.map(|d| Did(**d))
+					.collect(),
+					vote_requirement: 2,
+				},
+				[
+					(
+						b"Alice\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+						b"Alicesk\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+					),
+					(
+						b"Bob\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+						b"Bobsk\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+					),
+					(
+						b"Charlie\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+						b"Charliesk\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+					),
+				]
+				.iter()
+				.map(|(name, sk)| did_from_seed(name, sk))
+				.collect(),
+				Hash::repeat_byte(42),
 			)
 		},
 		// Bootnodes
@@ -131,7 +199,15 @@ fn testnet_genesis(
 	root_key: AccountId,
 	endowed_accounts: Vec<AccountId>,
 	_enable_println: bool,
+	master: Membership,
+	dids: Vec<(Did, DidKey)>,
+	poa_last_block: Hash,
 ) -> GenesisConfig {
+	// 200M tokens
+	let emission_supply: Balance = UNIT.checked_mul(200_000_000).unwrap();
+	// 100M tokens
+	let per_member_endowment: Balance = UNIT.checked_mul(100_000_000).unwrap();
+
 	GenesisConfig {
 		system: SystemConfig {
 			// Add Wasm runtime to storage.
@@ -159,5 +235,8 @@ fn testnet_genesis(
 			key: Some(root_key),
 		},
 		transaction_payment: Default::default(),
+		master: MasterConfig { members: master },
+		did_module: DIDModuleConfig { dids },
+		po_a_module: PoAModuleConfig { emission_supply, poa_last_block },
 	}
 }
