@@ -1,9 +1,9 @@
 <div id="top"></div>
 <p align="center">
-<img src=https://img.shields.io/github/stars/sweatpotato13/substrate-node-boilerplate?style=for-the-badge&logo=appveyor&color=blue />
-<img src=https://img.shields.io/github/forks/sweatpotato13/substrate-node-boilerplate?style=for-the-badge&logo=appveyor&color=blue />
-<img src=https://img.shields.io/github/issues/sweatpotato13/substrate-node-boilerplate?style=for-the-badge&logo=appveyor&color=informational />
-<img src=https://img.shields.io/github/issues-pr/sweatpotato13/substrate-node-boilerplate?style=for-the-badge&logo=appveyor&color=informational />
+<img src=https://img.shields.io/github/stars/InfraBlockchain/infra-did-substrate?style=for-the-badge&logo=appveyor&color=blue />
+<img src=https://img.shields.io/github/forks/InfraBlockchain/infra-did-substrate?style=for-the-badge&logo=appveyor&color=blue />
+<img src=https://img.shields.io/github/issues/InfraBlockchain/infra-did-substrate?style=for-the-badge&logo=appveyor&color=informational />
+<img src=https://img.shields.io/github/issues-pr/InfraBlockchain/infra-did-substrate?style=for-the-badge&logo=appveyor&color=informational />
 </p>
 <br />
 <!-- PROJECT LOGO -->
@@ -13,23 +13,23 @@
 
 <br />
 <div align="center">
-  <a href="https://github.com/sweatpotato13/substrate-node-boilerplate">
+  <a href="https://github.com/InfraBlockchain/infra-did-substrate">
     <!-- <img src="images/logo.png" alt="Logo" width="80" height="80"> -->
   </a>
 
-<h3 align="center">Substrate Node boilerplate</h3>
+<h3 align="center">Infra did substrate node</h3>
 
   <p align="center">
-    Substrate based polkadot node boilerplate
+    An DID node using the Substrate Blockchain Framework.
     <br />
-    <a href="https://github.com/sweatpotato13/substrate-node-boilerplate"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/InfraBlockchain/infra-did-substrate"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/sweatpotato13/substrate-node-boilerplate">View Demo</a>
+    <a href="https://github.com/InfraBlockchain/infra-did-substrate">View Demo</a>
     ·
-    <a href="https://github.com/sweatpotato13/substrate-node-boilerplate/issues">Report Bug</a>
+    <a href="https://github.com/InfraBlockchain/infra-did-substrate/issues">Report Bug</a>
     ·
-    <a href="https://github.com/sweatpotato13/substrate-node-boilerplate/issues">Request Feature</a>
+    <a href="https://github.com/InfraBlockchain/infra-did-substrate/issues">Request Feature</a>
   </p>
 </div>
 
@@ -57,9 +57,7 @@
 
 - [Rust](https://www.rust-lang.org/)
 - [Substrate](https://substrate.io/)
-- [zombienet](https://github.com/paritytech/zombienet)
 - [docker](https://www.docker.com/)
-- [kubernetes](https://kubernetes.io/)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -75,19 +73,12 @@ To get a local copy up and running follow these simple example steps.
 1. Clone the repo
 
    ```sh
-   git clone https://github.com/sweatpotato13/substrate-node-boilerplate.git
+   git clone https://github.com/InfraBlockchain/infra-did-substrate.git
    ```
 
 2. Build
    ```sh
-   make build
-   ```
-
-### Make docker image
-
-1. Build docker image
-   ```sh
-   docker build . -t <image-name>/<image-tag>
+   cargo build --release
    ```
 
 ### How to run
@@ -141,6 +132,6 @@ Don't forget to give the project a star! Thanks again!
 
 ## Contact
 
-Project Link: [https://github.com/sweatpotato13/substrate-node-boilerplate](https://github.com/sweatpotato13/substrate-node-boilerplate)
+Project Link: [https://github.com/InfraBlockchain/infra-did-substrate](https://github.com/InfraBlockchain/infra-did-substrate)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
