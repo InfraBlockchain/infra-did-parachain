@@ -199,7 +199,7 @@ fn test_emission_status_set_get() {
         assert_eq!(StakingRewards::staking_emission_status(), false);
 
         assert_noop!(
-            StakingRewards::set_emission_status(Origin::signed(4), true),
+            StakingRewards::set_emission_status(RuntimeOrigin::signed(4), true),
             BadOrigin
         );
         assert_eq!(StakingRewards::staking_emission_status(), false);
@@ -212,7 +212,7 @@ fn test_emission_status_set_get() {
         assert_eq!(StakingRewards::staking_emission_status(), true);
 
         assert_noop!(
-            StakingRewards::set_emission_status(Origin::signed(5), false),
+            StakingRewards::set_emission_status(RuntimeOrigin::signed(5), false),
             BadOrigin
         );
         assert_eq!(StakingRewards::staking_emission_status(), true);
