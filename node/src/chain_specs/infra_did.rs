@@ -17,10 +17,8 @@
 //! Parachain Chain Specifications
 
 use super::*;
-use crate::command::WISP_PARACHAIN_ID;
-use session_key_primitives::util::unchecked_account_id;
-use sp_application_crypto::Pair;
-use wisp_runtime::{
+use crate::command::INFRADID_PARACHAIN_ID;
+pub use infra_did_runtime::{
     did::{Did, DidKey},
     keys_and_sigs::PublicKey,
     master::Membership,
@@ -28,9 +26,11 @@ use wisp_runtime::{
     CouncilConfig, DIDModuleConfig, DemocracyConfig, GenesisConfig, MasterConfig,
     TechnicalCommitteeConfig,
 };
+use session_key_primitives::util::unchecked_account_id;
+use sp_application_crypto::Pair;
 
 /// Parachain Protocol Identifier
-pub const WISP_PROTOCOL_ID: &str = "wisp";
+pub const INFRADID_PROTOCOL_ID: &str = "infradid";
 
 /// Kusama Relaychain Local Network Identifier
 pub const KUSAMA_RELAYCHAIN_LOCAL_NET: &str = "kusama-local";
@@ -42,14 +42,17 @@ pub const KUSAMA_RELAYCHAIN_DEV_NET: &str = "kusama-dev";
 const SAFE_XCM_VERSION: u32 = 2;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type WispChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
+pub type InfraDIDChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
-/// Returns the [`Properties`] for the Wisp parachain.
-pub fn wisp_properties() -> Properties {
+/// Returns the [`Properties`] for the InfraDID parachain.
+pub fn infradid_properties() -> Properties {
     let mut p = Properties::new();
-    p.insert("ss58format".into(), constants::WISP_SS58PREFIX.into());
-    p.insert("tokenDecimals".into(), constants::WISP_DECIMAL.into());
-    p.insert("tokenSymbol".into(), constants::WISP_TOKEN_SYMBOL.into());
+    p.insert("ss58format".into(), constants::INFRADID_SS58PREFIX.into());
+    p.insert("tokenDecimals".into(), constants::INFRADID_DECIMAL.into());
+    p.insert(
+        "tokenSymbol".into(),
+        constants::INFRADID_TOKEN_SYMBOL.into(),
+    );
     p
 }
 
@@ -61,14 +64,14 @@ fn did_from_seed(did: &[u8; 32], seed: &[u8; 32]) -> (Did, DidKey) {
     )
 }
 
-/// Returns the Wisp development chainspec.
-pub fn wisp_development_config() -> WispChainSpec {
-    WispChainSpec::from_genesis(
-        "Wisp Parachain Development",
-        "wisp_dev",
+/// Returns the InfraDID development chainspec.
+pub fn infradid_development_config() -> InfraDIDChainSpec {
+    InfraDIDChainSpec::from_genesis(
+        "InfraDID Parachain Development",
+        "infradid_dev",
         ChainType::Local,
         move || {
-            wisp_dev_genesis(
+            infradid_dev_genesis(
                 vec![(
                     unchecked_account_id::<sr25519::Public>("Alice"),
                     SessionKeys::from_seed_unchecked("Alice"),
@@ -112,25 +115,25 @@ pub fn wisp_development_config() -> WispChainSpec {
         },
         vec![],
         None,
-        Some(WISP_PROTOCOL_ID),
+        Some(INFRADID_PROTOCOL_ID),
         None,
-        Some(wisp_properties()),
+        Some(infradid_properties()),
         Extensions {
             relay_chain: "".into(),
-            para_id: WISP_PARACHAIN_ID,
+            para_id: INFRADID_PARACHAIN_ID,
         },
     )
 }
 
-/// Returns the Wisp local chainspec.
-pub fn wisp_local_config(localdev: bool) -> WispChainSpec {
+/// Returns the InfraDID local chainspec.
+pub fn infradid_local_config(localdev: bool) -> InfraDIDChainSpec {
     let id = if localdev {
-        "wisp_localdev"
+        "infradid_localdev"
     } else {
-        "wisp_local"
+        "infradid_local"
     };
-    WispChainSpec::from_genesis(
-        "Wisp Parachain Local",
+    InfraDIDChainSpec::from_genesis(
+        "InfraDID Parachain Local",
         id,
         ChainType::Local,
         move || {
@@ -163,7 +166,7 @@ pub fn wisp_local_config(localdev: bool) -> WispChainSpec {
                     ),
                 ]
             };
-            wisp_dev_genesis(
+            infradid_dev_genesis(
                 invulnerables,
                 unchecked_account_id::<sr25519::Public>("Alice"),
                 vec![
@@ -210,17 +213,17 @@ pub fn wisp_local_config(localdev: bool) -> WispChainSpec {
         },
         vec![],
         None,
-        Some(WISP_PROTOCOL_ID),
+        Some(INFRADID_PROTOCOL_ID),
         None,
-        Some(wisp_properties()),
+        Some(infradid_properties()),
         Extensions {
             relay_chain: "".into(),
-            para_id: WISP_PARACHAIN_ID,
+            para_id: INFRADID_PARACHAIN_ID,
         },
     )
 }
 
-fn wisp_dev_genesis(
+fn infradid_dev_genesis(
     invulnerables: Vec<(AccountId, SessionKeys)>,
     root_key: AccountId,
     endowed_accounts: Vec<AccountId>,
@@ -228,18 +231,18 @@ fn wisp_dev_genesis(
     dids: Vec<(Did, DidKey)>,
 ) -> GenesisConfig {
     GenesisConfig {
-        system: wisp_runtime::SystemConfig {
-            code: wisp_runtime::WASM_BINARY
+        system: infra_did_runtime::SystemConfig {
+            code: infra_did_runtime::WASM_BINARY
                 .expect("WASM binary was not build, please build it!")
                 .to_vec(),
         },
-        balances: wisp_runtime::BalancesConfig {
+        balances: infra_did_runtime::BalancesConfig {
             balances: endowed_accounts[..endowed_accounts.len() / 2]
                 .iter()
                 .map(|k| {
                     (
                         k.clone(),
-                        100 * WISP_ENDOWMENT / ((endowed_accounts.len() / 2) as Balance),
+                        100 * INFRADID_ENDOWMENT / ((endowed_accounts.len() / 2) as Balance),
                     )
                 })
                 .collect(),
@@ -247,18 +250,18 @@ fn wisp_dev_genesis(
         // no need to pass anything to aura, in fact it will panic if we do. Session will take care
         // of this.
         aura: Default::default(),
-        sudo: wisp_runtime::SudoConfig {
+        sudo: infra_did_runtime::SudoConfig {
             key: Some(root_key),
         },
-        parachain_info: wisp_runtime::ParachainInfoConfig {
-            parachain_id: WISP_PARACHAIN_ID.into(),
+        parachain_info: infra_did_runtime::ParachainInfoConfig {
+            parachain_id: INFRADID_PARACHAIN_ID.into(),
         },
-        collator_selection: wisp_runtime::CollatorSelectionConfig {
+        collator_selection: infra_did_runtime::CollatorSelectionConfig {
             invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
-            candidacy_bond: WSP * 1000, // How many tokens will be reserved as collator
+            candidacy_bond: IDID * 1000, // How many tokens will be reserved as collator
             ..Default::default()
         },
-        session: wisp_runtime::SessionConfig {
+        session: infra_did_runtime::SessionConfig {
             keys: invulnerables
                 .iter()
                 .cloned()
@@ -284,7 +287,7 @@ fn wisp_dev_genesis(
         council_membership: Default::default(),
         technical_membership: Default::default(),
         parachain_system: Default::default(),
-        polkadot_xcm: wisp_runtime::PolkadotXcmConfig {
+        polkadot_xcm: infra_did_runtime::PolkadotXcmConfig {
             safe_xcm_version: Some(SAFE_XCM_VERSION),
         },
         master: MasterConfig { members: master },
@@ -292,27 +295,27 @@ fn wisp_dev_genesis(
     }
 }
 
-// /// Returns the Wisp testnet chainspec.
-// pub fn wisp_testnet_config() -> Result<WispChainSpec, String> {
-//     let mut spec = WispChainSpec::from_json_bytes(
-//         &include_bytes!("../../../genesis/wisp-testnet-genesis.json")[..],
+// /// Returns the InfraDID testnet chainspec.
+// pub fn infradid_testnet_config() -> Result<InfraDIDChainSpec, String> {
+//     let mut spec = InfraDIDChainSpec::from_json_bytes(
+//         &include_bytes!("../../../genesis/infradid-testnet-genesis.json")[..],
 //     )?;
 //     spec.extensions_mut().para_id = PARACHAIN_ID;
 //     Ok(spec)
 // }
 
-// pub fn wisp_2085_config() -> Result<WispChainSpec, String> {
-//     let mut spec = WispChainSpec::from_json_bytes(
-//         &include_bytes!("../../../genesis/wisp-2085-genesis.json")[..],
+// pub fn infradid_2085_config() -> Result<InfraDIDChainSpec, String> {
+//     let mut spec = InfraDIDChainSpec::from_json_bytes(
+//         &include_bytes!("../../../genesis/infradid-2085-genesis.json")[..],
 //     )?;
-//     spec.extensions_mut().para_id = WISP_ON_BAIKAL_PARACHAIN_ID;
+//     spec.extensions_mut().para_id = INFRADID_ON_BAIKAL_PARACHAIN_ID;
 //     Ok(spec)
 // }
 
-// /// Returns the Wisp V3 2085 staging chainspec.
-// pub fn wisp_v3_2085_staging_config() -> Result<WispChainSpec, String> {
-//     let mut spec = WispChainSpec::from_json_bytes(
-//         &include_bytes!("../../../genesis/wisp-v3-2085-genesis.json")[..],
+// /// Returns the InfraDID V3 2085 staging chainspec.
+// pub fn infradid_v3_2085_staging_config() -> Result<InfraDIDChainSpec, String> {
+//     let mut spec = InfraDIDChainSpec::from_json_bytes(
+//         &include_bytes!("../../../genesis/infradid-v3-2085-genesis.json")[..],
 //     )?;
 //     spec.extensions_mut().para_id = 9997;
 //     Ok(spec)

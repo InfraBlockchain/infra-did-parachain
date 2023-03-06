@@ -1,6 +1,6 @@
 .PHONY: build
 build:
-	cargo b --profile production
+	cargo b --release
 
 .PHONY: update
 update:
@@ -8,4 +8,4 @@ update:
 
 .PHONY: dev
 dev:
-	cargo run -- --chain=wisp-localdev --alice --tmp
+	cargo run -- --chain=infradid-localdev --alice --tmp

@@ -15,7 +15,7 @@
 // along with Manta.  If not, see <http://www.gnu.org/licenses/>.
 
 use super::{
-    assets_config::WispAssetConfig, AssetManager, Assets, Balances, DmpQueue,
+    assets_config::InfraDIDAssetConfig, AssetManager, Assets, Balances, DmpQueue,
     EnsureRootOrMoreThanHalfCouncil, ParachainInfo, ParachainSystem, PolkadotXcm, Runtime,
     RuntimeCall, RuntimeEvent, RuntimeOrigin, Treasury, XcmpQueue, MAXIMUM_BLOCK_WEIGHT,
 };
@@ -132,7 +132,7 @@ parameter_types! {
 pub type MultiAssetTransactor = MultiAssetAdapter<
     Runtime,
     // Used to find the query the native asset id of the chain.
-    WispAssetConfig,
+    InfraDIDAssetConfig,
     // "default" implementation of converting a `MultiLocation` to an `AccountId`
     LocationToAccountId,
     // Used when the incoming asset is a fungible concrete asset matching the given location or name:
@@ -212,7 +212,7 @@ impl Config for XcmExecutorConfig {
     type LocationInverter = LocationInverter<Ancestry>;
     type Barrier = Barrier;
     type Weigher = WeightInfoBounds<
-        crate::weights::xcm::WispXcmWeight<RuntimeCall>,
+        crate::weights::xcm::InfraDIDXcmWeight<RuntimeCall>,
         RuntimeCall,
         MaxInstructions,
     >;
@@ -261,7 +261,7 @@ impl pallet_xcm::Config for Runtime {
     type XcmTeleportFilter = Nothing;
     type XcmReserveTransferFilter = Nothing;
     type Weigher = WeightInfoBounds<
-        crate::weights::xcm::WispXcmWeight<RuntimeCall>,
+        crate::weights::xcm::InfraDIDXcmWeight<RuntimeCall>,
         RuntimeCall,
         MaxInstructions,
     >;
@@ -332,7 +332,7 @@ impl orml_xtokens::Config for Runtime {
     // It uses the Weigher configuration to calculate weights for the user callable extrinsics on this chain,
     // as well as weights for execution on the destination chain. Both based on the composed xcm messages.
     type Weigher = WeightInfoBounds<
-        crate::weights::xcm::WispXcmWeight<RuntimeCall>,
+        crate::weights::xcm::InfraDIDXcmWeight<RuntimeCall>,
         RuntimeCall,
         MaxInstructions,
     >;

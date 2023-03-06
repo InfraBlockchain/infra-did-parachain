@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Manta.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Wisp Parachain Runtime
+//! InfraDID Parachain Runtime
 
 #![allow(clippy::identity_op)] // keep e.g. 1 * DAYS for legibility
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -151,8 +151,8 @@ mod weights;
 
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-    spec_name: create_runtime_str!("wisp"),
-    impl_name: create_runtime_str!("wisp"),
+    spec_name: create_runtime_str!("infradid"),
+    impl_name: create_runtime_str!("infradid"),
     authoring_version: 2,
     spec_version: 4020,
     impl_version: 1,
@@ -204,7 +204,7 @@ parameter_types! {
         })
         .avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
         .build_or_panic();
-    pub const SS58Prefix: u8 = common_primitives::constants::WISP_SS58PREFIX;
+    pub const SS58Prefix: u8 = common_primitives::constants::INFRADID_SS58PREFIX;
 }
 
 // Don't allow permission-less asset creation.
@@ -358,7 +358,7 @@ impl pallet_authorship::Config for Runtime {
 }
 
 parameter_types! {
-    pub const NativeTokenExistentialDeposit: u128 = 10 * cWSP; // 0.1 WSP
+    pub const NativeTokenExistentialDeposit: u128 = 10 * cIDID; // 0.1 IDID
 }
 impl pallet_balances::Config for Runtime {
     type MaxLocks = ConstU32<50>;
@@ -374,7 +374,7 @@ impl pallet_balances::Config for Runtime {
 
 parameter_types! {
     /// Relay Chain `TransactionLengthToFeeCoeff` / 10
-    pub const TransactionLengthToFeeCoeff: Balance = mWSP / 100;
+    pub const TransactionLengthToFeeCoeff: Balance = mIDID / 100;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -416,13 +416,13 @@ impl pallet_sudo::Config for Runtime {
 }
 
 parameter_types! {
-    pub LaunchPeriod: BlockNumber = prod_or_fast!(5 * MINUTES, 1 * MINUTES, "WISP_LAUNCHPERIOD");
-    pub VotingPeriod: BlockNumber = prod_or_fast!(5 * MINUTES, 1 * MINUTES, "WISP_VOTINGPERIOD");
-    pub FastTrackVotingPeriod: BlockNumber = prod_or_fast!(5 * MINUTES, 1 * MINUTES, "WISP_FASTTRACKVOTINGPERIOD");
+    pub LaunchPeriod: BlockNumber = prod_or_fast!(5 * MINUTES, 1 * MINUTES, "INFRADID_LAUNCHPERIOD");
+    pub VotingPeriod: BlockNumber = prod_or_fast!(5 * MINUTES, 1 * MINUTES, "INFRADID_VOTINGPERIOD");
+    pub FastTrackVotingPeriod: BlockNumber = prod_or_fast!(5 * MINUTES, 1 * MINUTES, "INFRADID_FASTTRACKVOTINGPERIOD");
     pub const InstantAllowed: bool = true;
-    pub const MinimumDeposit: Balance = 20 * WSP;
-    pub EnactmentPeriod: BlockNumber = prod_or_fast!(5 * MINUTES, 1 * MINUTES, "WISP_ENACTMENTPERIOD");
-    pub CooloffPeriod: BlockNumber = prod_or_fast!(5 * MINUTES, 1 * MINUTES, "WISP_COOLOFFPERIOD");
+    pub const MinimumDeposit: Balance = 20 * IDID;
+    pub EnactmentPeriod: BlockNumber = prod_or_fast!(5 * MINUTES, 1 * MINUTES, "INFRADID_ENACTMENTPERIOD");
+    pub CooloffPeriod: BlockNumber = prod_or_fast!(5 * MINUTES, 1 * MINUTES, "INFRADID_COOLOFFPERIOD");
     pub const PreimageByteDeposit: Balance = deposit(0, 1);
 }
 
@@ -546,9 +546,9 @@ impl pallet_membership::Config<TechnicalMembershipInstance> for Runtime {
 
 parameter_types! {
     pub const ProposalBond: Permill = Permill::from_percent(1);
-    pub const ProposalBondMinimum: Balance = 500 * WSP;
-    pub const ProposalBondMaximum: Balance = 10_000 * WSP;
-    pub SpendPeriod: BlockNumber = prod_or_fast!(10 * MINUTES, 2 * MINUTES, "WISP_SPENDPERIOD");
+    pub const ProposalBondMinimum: Balance = 500 * IDID;
+    pub const ProposalBondMaximum: Balance = 10_000 * IDID;
+    pub SpendPeriod: BlockNumber = prod_or_fast!(10 * MINUTES, 2 * MINUTES, "INFRADID_SPENDPERIOD");
     pub const Burn: Permill = Permill::from_percent(0);
     pub const TreasuryPalletId: PalletId = TREASURY_PALLET_ID;
 }
@@ -647,7 +647,7 @@ parameter_types! {
     // Our NORMAL_DISPATCH_RATIO is 70% of the 5MB limit
     // So anything more than 3.5MB doesn't make sense here
     pub const PreimageMaxSize: u32 = 3584 * 1024;
-    pub const PreimageBaseDeposit: Balance = 1 * WSP;
+    pub const PreimageBaseDeposit: Balance = 1 * IDID;
 }
 
 impl pallet_preimage::Config for Runtime {
@@ -663,7 +663,7 @@ impl pallet_preimage::Config for Runtime {
 
 parameter_types! {
     // Rotate collator's spot each 6 hours.
-    pub Period: u32 = prod_or_fast!(6 * HOURS, 2 * MINUTES, "WISP_PERIOD");
+    pub Period: u32 = prod_or_fast!(6 * HOURS, 2 * MINUTES, "INFRADID_PERIOD");
     pub const Offset: u32 = 0;
 }
 
@@ -1165,7 +1165,7 @@ impl_runtime_apis! {
                 ));
                 pub const CheckedAccount: Option<AccountId> = None;
                 pub const RocLocation: MultiLocation = MultiLocation::parent();
-                pub WspLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(2084)));
+                pub IdidLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(2084)));
             }
 
             impl pallet_xcm_benchmarks::Config for Runtime {
@@ -1196,8 +1196,8 @@ impl_runtime_apis! {
                         .collect::<Vec<_>>();
 
                         assets.push(MultiAsset{
-                            id: Concrete(WspLocation::get()),
-                            fun: Fungible(1_000_000 * WSP),
+                            id: Concrete(IdidLocation::get()),
+                            fun: Fungible(1_000_000 * IDID),
                         });
                         assets.into()
                 }
@@ -1212,8 +1212,8 @@ impl_runtime_apis! {
 
                 fn get_multi_asset() -> MultiAsset {
                     MultiAsset {
-                        id: Concrete(WspLocation::get()),
-                        fun: Fungible(1 * WSP),
+                        id: Concrete(IdidLocation::get()),
+                        fun: Fungible(1 * IDID),
                     }
                 }
             }
@@ -1234,8 +1234,8 @@ impl_runtime_apis! {
                 }
 
                 fn claimable_asset() -> Result<(MultiLocation, MultiLocation, MultiAssets), BenchmarkError> {
-                    let origin = WspLocation::get();
-                    let assets: MultiAssets = (Concrete(WspLocation::get()), 1_000 * WSP).into();
+                    let origin = IdidLocation::get();
+                    let assets: MultiAssets = (Concrete(IdidLocation::get()), 1_000 * IDID).into();
                     let ticket = MultiLocation { parents: 0, interior: Here };
                     Ok((origin, ticket, assets))
                 }

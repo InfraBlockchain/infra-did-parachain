@@ -16,7 +16,7 @@
 
 //! Parachain CLI
 
-use wisp::command::{run, Result};
+use infradid::command::{run, Result};
 
 #[inline]
 fn main() -> Result {

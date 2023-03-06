@@ -20,7 +20,7 @@ use crate::{
     chain_specs,
     cli::{Cli, RelayChainCli, Subcommand},
     rpc,
-    service::{new_partial, WispRuntimeExecutor},
+    service::{new_partial, InfraDIDRuntimeExecutor},
 };
 use codec::Encode;
 use common_primitives::types::Header;
@@ -50,16 +50,16 @@ pub type Result<T = (), E = Error> = core::result::Result<T, E>;
 pub type Block = generic::Block<Header, OpaqueExtrinsic>;
 
 /// Parachain ID
-pub const WISP_PARACHAIN_ID: u32 = 1337;
+pub const INFRADID_PARACHAIN_ID: u32 = 1337;
 
 trait IdentifyChain {
-    fn is_wisp(&self) -> bool;
+    fn is_infradid(&self) -> bool;
     fn is_localdev(&self) -> bool;
 }
 
 impl IdentifyChain for dyn sc_service::ChainSpec {
-    fn is_wisp(&self) -> bool {
-        self.id().starts_with("wisp")
+    fn is_infradid(&self) -> bool {
+        self.id().starts_with("infradid")
     }
     fn is_localdev(&self) -> bool {
         self.id().ends_with("localdev")
@@ -67,8 +67,8 @@ impl IdentifyChain for dyn sc_service::ChainSpec {
 }
 
 impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
-    fn is_wisp(&self) -> bool {
-        <dyn sc_service::ChainSpec>::is_wisp(self)
+    fn is_infradid(&self) -> bool {
+        <dyn sc_service::ChainSpec>::is_infradid(self)
     }
     fn is_localdev(&self) -> bool {
         <dyn sc_service::ChainSpec>::is_localdev(self)
@@ -77,17 +77,17 @@ impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
 
 fn load_spec(id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
     match id {
-        // wisp chainspec
-        "wisp-dev" => Ok(Box::new(chain_specs::wisp_development_config())),
-        "wisp-local" => Ok(Box::new(chain_specs::wisp_local_config(false))),
-        "wisp-localdev" => Ok(Box::new(chain_specs::wisp_local_config(true))),
-        // "wisp-testnet" => Ok(Box::new(chain_specs::wisp_testnet_config()?)),
-        // "wisp-2085" => Ok(Box::new(chain_specs::wisp_2085_config()?)),
-        // "wisp-v3-staging" => Ok(Box::new(chain_specs::wisp_v3_2085_staging_config()?)),
+        // infradid chainspec
+        "infradid-dev" => Ok(Box::new(chain_specs::infradid_development_config())),
+        "infradid-local" => Ok(Box::new(chain_specs::infradid_local_config(false))),
+        "infradid-localdev" => Ok(Box::new(chain_specs::infradid_local_config(true))),
+        // "infradid-testnet" => Ok(Box::new(chain_specs::infradid_testnet_config()?)),
+        // "infradid-2085" => Ok(Box::new(chain_specs::infradid_2085_config()?)),
+        // "infradid-v3-staging" => Ok(Box::new(chain_specs::infradid_v3_2085_staging_config()?)),
         path => {
             let chain_spec = chain_specs::ChainSpec::from_json_file(path.into())?;
-            if chain_spec.is_wisp() {
-                Ok(Box::new(chain_specs::WispChainSpec::from_json_file(
+            if chain_spec.is_infradid() {
+                Ok(Box::new(chain_specs::InfraDIDChainSpec::from_json_file(
                     path.into(),
                 )?))
             } else {
@@ -133,8 +133,8 @@ impl SubstrateCli for Cli {
     }
 
     fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-        if chain_spec.is_wisp() {
-            &wisp_runtime::VERSION
+        if chain_spec.is_infradid() {
+            &infra_did_runtime::VERSION
         } else {
             panic!("invalid chain spec!")
         }
@@ -143,7 +143,7 @@ impl SubstrateCli for Cli {
 
 impl SubstrateCli for RelayChainCli {
     fn impl_name() -> String {
-        "Parachain Collator".into()
+        "Infra-DID Parachain Collator".into()
     }
 
     fn impl_version() -> String {
@@ -152,7 +152,7 @@ impl SubstrateCli for RelayChainCli {
 
     fn description() -> String {
         format!(
-            "Parachain collator\n\nThe command-line arguments provided first will be \
+            "Infra-DID Parachain collator\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
 		{} [parachain-args] -- [relaychain-args]",
@@ -184,8 +184,8 @@ impl SubstrateCli for RelayChainCli {
 /// Creates partial components for the runtimes that are supported by the benchmarks.
 macro_rules! construct_benchmark_partials {
     ($config:expr, |$partials:ident| $code:expr) => {
-        if $config.chain_spec.is_wisp() {
-            let $partials = new_partial::<wisp_runtime::RuntimeApi>(&$config)?;
+        if $config.chain_spec.is_infradid() {
+            let $partials = new_partial::<infra_did_runtime::RuntimeApi>(&$config)?;
             $code
         } else {
             Err("The chain is not supported".into())
@@ -196,9 +196,9 @@ macro_rules! construct_benchmark_partials {
 macro_rules! construct_async_run {
     (|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
         let runner = $cli.create_runner($cmd)?;
-            if runner.config().chain_spec.is_wisp() {
+            if runner.config().chain_spec.is_infradid() {
                 runner.async_run(|$config| {
-                    let $components = new_partial::<wisp_runtime::RuntimeApi>(
+                    let $components = new_partial::<infra_did_runtime::RuntimeApi>(
                         &$config,
                     )?;
                     let task_manager = $components.task_manager;
@@ -286,8 +286,8 @@ pub fn run_with(cli: Cli) -> Result {
                 BenchmarkCmd::Pallet(cmd) => {
                     if cfg!(feature = "runtime-benchmarks") {
                         runner.sync_run(|config| {
-                            if config.chain_spec.is_wisp() {
-                                cmd.run::<Block, WispRuntimeExecutor>(config)
+                            if config.chain_spec.is_infradid() {
+                                cmd.run::<Block, InfraDIDRuntimeExecutor>(config)
                             } else {
                                 Err("Chain doesn't support benchmarking".into())
                             }
@@ -335,9 +335,12 @@ pub fn run_with(cli: Cli) -> Result {
                 sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
                     .map_err(|e| format!("Error: {e:?}"))?;
 
-            if runner.config().chain_spec.is_wisp() {
+            if runner.config().chain_spec.is_infradid() {
                 runner.async_run(|config| {
-                    Ok((cmd.run::<Block, WispRuntimeExecutor>(config), task_manager))
+                    Ok((
+                        cmd.run::<Block, InfraDIDRuntimeExecutor>(config),
+                        task_manager,
+                    ))
                 })
             } else {
                 Err("Chain doesn't support try-runtime".into())
@@ -357,10 +360,10 @@ pub fn run_with(cli: Cli) -> Result {
             runner.run_node_until_exit(|config| async move {
                 if is_dev {
                     info!("⚠️  DEV STANDALONE MODE.");
-                    if config.chain_spec.is_wisp() {
-                        return crate::service::start_dev_nimbus_node::<wisp_runtime::RuntimeApi, _>(
+                    if config.chain_spec.is_infradid() {
+                        return crate::service::start_dev_nimbus_node::<infra_did_runtime::RuntimeApi, _>(
                             config,
-                            rpc::create_wisp_full,
+                            rpc::create_infradid_full,
                         ).await
                             .map_err(Into::into);
                     } else {
@@ -418,14 +421,14 @@ pub fn run_with(cli: Cli) -> Result {
                     }
                 );
 
-                if config.chain_spec.is_wisp() {
-                    crate::service::start_parachain_node::<wisp_runtime::RuntimeApi, _>(
+                if config.chain_spec.is_infradid() {
+                    crate::service::start_parachain_node::<infra_did_runtime::RuntimeApi, _>(
                         config,
                         polkadot_config,
                         collator_options,
                         id,
                         hwbench,
-                        rpc::create_wisp_full,
+                        rpc::create_infradid_full,
                     )
                     .await
                     .map(|r| r.0)

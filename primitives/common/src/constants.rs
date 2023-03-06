@@ -19,14 +19,14 @@
 use crate::types::Balance;
 use frame_support::{parameter_types, weights::RuntimeDbWeight, PalletId};
 
-/// Wisp SS58 Prefix
-pub const WISP_SS58PREFIX: u8 = 78;
+/// InfraDID SS58 Prefix
+pub const INFRADID_SS58PREFIX: u8 = 78;
 
-/// Wisp Decimals
-pub const WISP_DECIMAL: u8 = 18;
+/// InfraDID Decimals
+pub const INFRADID_DECIMAL: u8 = 18;
 
-/// Wisp Token Symbol
-pub const WISP_TOKEN_SYMBOL: &str = "WSP";
+/// InfraDID Token Symbol
+pub const INFRADID_TOKEN_SYMBOL: &str = "IDID";
 
 /// Manta parachain time-related
 pub mod time {

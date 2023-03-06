@@ -47,7 +47,7 @@ use xcm::{
 };
 parameter_types! {
     pub const BlockHashCount: u64 = 250;
-    pub const SS58Prefix: u8 = common_primitives::constants::WISP_SS58PREFIX;
+    pub const SS58Prefix: u8 = common_primitives::constants::INFRADID_SS58PREFIX;
 }
 
 impl system::Config for Runtime {
@@ -182,8 +182,8 @@ parameter_types! {
         VersionedMultiLocation::V1(MultiLocation::new(1, X1(Parachain(1024)))));
     pub NativeAssetMetadata: AssetRegistryMetadata<Balance> = AssetRegistryMetadata {
         metadata: AssetStorageMetadata {
-            name: b"wisp".to_vec(),
-            symbol: b"WSP".to_vec(),
+            name: b"infradid".to_vec(),
+            symbol: b"IDID".to_vec(),
             decimals: 18,
             is_frozen: false,
         },

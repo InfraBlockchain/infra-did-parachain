@@ -19,13 +19,13 @@
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2022-12-29, STEPS: `50`, REPEAT: 20, LOW RANGE: `[]`, HIGH RANGE: `[]`
 //! HOSTNAME: `ip-172-31-24-14`, CPU: `Intel(R) Xeon(R) Platinum 8275CL CPU @ 3.00GHz`
-//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("wisp-dev"), DB CACHE: 1024
+//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("infradid-dev"), DB CACHE: 1024
 
 // Executed Command:
 // ./target/production/manta
 // benchmark
 // pallet
-// --chain=wisp-dev
+// --chain=infradid-dev
 // --steps=50
 // --repeat=20
 // --pallet=pallet_xcm_benchmarks::fungible

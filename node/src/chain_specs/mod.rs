@@ -30,19 +30,19 @@ use sc_service::{ChainType, Properties};
 use serde::{Deserialize, Serialize};
 use sp_core::sr25519;
 
-pub mod wisp;
+pub mod infra_did;
 
-pub use self::wisp::*;
-pub use wisp_runtime::currency::WSP;
+pub use self::infra_did::*;
+pub use infra_did_runtime::currency::IDID;
 
-/// Wisp Endowment: 10 endowment so that total supply is 10B
-pub const WISP_ENDOWMENT: Balance = 1_000_000_000 * WSP;
+/// InfraDID Endowment: 10 endowment so that total supply is 10B
+pub const INFRADID_ENDOWMENT: Balance = 1_000_000_000 * IDID;
 
 /// Staging Telemetry URL
 pub const STAGING_TELEMETRY_URL: &str = "wss://api.telemetry.manta.systems/submit/";
 
 /// Manta Network Chain Spec
-pub type ChainSpec = sc_service::GenericChainSpec<wisp_runtime::GenesisConfig, Extensions>;
+pub type ChainSpec = sc_service::GenericChainSpec<infra_did::GenesisConfig, Extensions>;
 
 /// The extensions for the [`ChainSpec`].
 #[derive(

@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Manta.  If not, see <http://www.gnu.org/licenses/>.
 
-//! Wisp RPC Extensions
+//! InfraDID RPC Extensions
 
 use super::*;
 
-/// Instantiate all RPC extensions for wisp.
-pub fn create_wisp_full<C, P>(deps: FullDeps<C, P>) -> Result<RpcExtension, sc_service::Error>
+/// Instantiate all RPC extensions for infradid.
+pub fn create_infradid_full<C, P>(deps: FullDeps<C, P>) -> Result<RpcExtension, sc_service::Error>
 where
     C: ProvideRuntimeApi<Block>
         + HeaderBackend<Block>

@@ -25,9 +25,9 @@ use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use std::sync::Arc;
 
-mod wisp;
+mod infra_did;
 
-pub use wisp::create_wisp_full;
+pub use infra_did::create_infradid_full;
 
 /// A type representing all RPC extensions.
 pub type RpcExtension = jsonrpsee::RpcModule<()>;

@@ -52,17 +52,17 @@ type HostFunctions = (
     frame_benchmarking::benchmarking::HostFunctions,
 );
 
-/// Native Wisp Parachain executor instance.
-pub struct WispRuntimeExecutor;
-impl sc_executor::NativeExecutionDispatch for WispRuntimeExecutor {
+/// Native InfraDID Parachain executor instance.
+pub struct InfraDIDRuntimeExecutor;
+impl sc_executor::NativeExecutionDispatch for InfraDIDRuntimeExecutor {
     type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
     fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-        wisp_runtime::api::dispatch(method, data)
+        infra_did_runtime::api::dispatch(method, data)
     }
 
     fn native_version() -> sc_executor::NativeVersion {
-        wisp_runtime::native_version()
+        infra_did_runtime::native_version()
     }
 }
 
@@ -323,7 +323,7 @@ where
     Ok((task_manager, client))
 }
 
-/// Start a wisp parachain node.
+/// Start a infradid parachain node.
 pub async fn start_parachain_node<RuntimeApi, FullRpc>(
     parachain_config: Configuration,
     polkadot_config: Configuration,

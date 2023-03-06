@@ -1,9 +1,9 @@
 [package]
-authors = ['Cute_Wisp']
+authors = ['InfraBlockchain']
 edition = '2021'
 homepage = ''
 license = 'GPL-3.0'
-name = 'wisp-runtime'
+name = 'infra-did-runtime'
 repository = ''
 version = '4.0.2'
 

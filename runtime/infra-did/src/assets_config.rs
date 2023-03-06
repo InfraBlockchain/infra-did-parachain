@@ -24,7 +24,7 @@ use common_primitives::{
         AssetConfig, AssetIdType, AssetLocation, AssetRegistry, AssetRegistryMetadata,
         AssetStorageMetadata, BalanceType, LocationType, NativeAndNonNative,
     },
-    constants::{ASSET_MANAGER_PALLET_ID, MANTA_PAY_PALLET_ID, WISP_DECIMAL},
+    constants::{ASSET_MANAGER_PALLET_ID, MANTA_PAY_PALLET_ID, INFRADID_DECIMAL},
     types::{AccountId, Balance, CommonAssetId},
 };
 
@@ -138,9 +138,9 @@ parameter_types! {
         VersionedMultiLocation::V1(SelfReserve::get()));
     pub NativeAssetMetadata: AssetRegistryMetadata<Balance> = AssetRegistryMetadata {
         metadata: AssetStorageMetadata {
-            name: b"Wisp".to_vec(),
-            symbol: b"WSP".to_vec(),
-            decimals: WISP_DECIMAL,
+            name: b"InfraDID".to_vec(),
+            symbol: b"IDID".to_vec(),
+            decimals: INFRADID_DECIMAL,
             is_frozen: false,
         },
         min_balance: NativeTokenExistentialDeposit::get(),
@@ -149,22 +149,22 @@ parameter_types! {
     pub const AssetManagerPalletId: PalletId = ASSET_MANAGER_PALLET_ID;
 }
 
-pub type WispConcreteFungibleLedger =
-    NativeAndNonNative<Runtime, WispAssetConfig, Balances, Assets>;
+pub type InfraDIDConcreteFungibleLedger =
+    NativeAndNonNative<Runtime, InfraDIDAssetConfig, Balances, Assets>;
 
 /// AssetConfig implementations for this runtime
 #[derive(Clone, Eq, PartialEq)]
-pub struct WispAssetConfig;
-impl LocationType for WispAssetConfig {
+pub struct InfraDIDAssetConfig;
+impl LocationType for InfraDIDAssetConfig {
     type Location = AssetLocation;
 }
-impl BalanceType for WispAssetConfig {
+impl BalanceType for InfraDIDAssetConfig {
     type Balance = Balance;
 }
-impl AssetIdType for WispAssetConfig {
+impl AssetIdType for InfraDIDAssetConfig {
     type AssetId = CommonAssetId;
 }
-impl AssetConfig<Runtime> for WispAssetConfig {
+impl AssetConfig<Runtime> for InfraDIDAssetConfig {
     type StartNonNativeAssetId = StartNonNativeAssetId;
     type NativeAssetId = NativeAssetId;
     type AssetRegistryMetadata = AssetRegistryMetadata<Balance>;
@@ -172,7 +172,7 @@ impl AssetConfig<Runtime> for WispAssetConfig {
     type NativeAssetMetadata = NativeAssetMetadata;
     type StorageMetadata = AssetStorageMetadata;
     type AssetRegistry = MantaAssetRegistry;
-    type FungibleLedger = WispConcreteFungibleLedger;
+    type FungibleLedger = InfraDIDConcreteFungibleLedger;
 }
 
 impl pallet_asset_manager::Config for Runtime {
@@ -180,7 +180,7 @@ impl pallet_asset_manager::Config for Runtime {
     type AssetId = CommonAssetId;
     type Balance = Balance;
     type Location = AssetLocation;
-    type AssetConfig = WispAssetConfig;
+    type AssetConfig = InfraDIDAssetConfig;
     type ModifierOrigin = EnsureRoot<AccountId>;
     type PalletId = AssetManagerPalletId;
     type WeightInfo = weights::pallet_asset_manager::SubstrateWeight<Runtime>;

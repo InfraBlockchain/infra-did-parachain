@@ -1,12 +1,12 @@
 [package]
-authors = ['Cute_Wisp']
+authors = ['InfraBlockchain']
 build = 'build.rs'
-default-run = "wisp"
+default-run = "infradid"
 description = 'Parachain Node.'
 edition = '2021'
 homepage = ''
 license = 'GPL-3.0'
-name = 'wisp'
+name = 'infradid'
 repository = ''
 rust-version = '1.62'
 version = '4.0.2'
@@ -102,7 +102,7 @@ polkadot-service = { git = 'https://github.com/paritytech/polkadot.git', branch 
 xcm = { git = "https://github.com/paritytech/polkadot.git", branch = "release-v0.9.37" }
 
 # Self dependencies
-wisp-runtime = { path = '../runtime/wisp' }
+infra-did-runtime = { path = '../runtime/infra-did' }
 common-primitives = { path = '../primitives/common' }
 session-key-primitives = { path = '../primitives/session-keys' }
 
