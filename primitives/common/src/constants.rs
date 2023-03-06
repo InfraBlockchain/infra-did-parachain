@@ -20,7 +20,7 @@ use crate::types::Balance;
 use frame_support::{parameter_types, weights::RuntimeDbWeight, PalletId};
 
 /// InfraDID SS58 Prefix
-pub const INFRADID_SS58PREFIX: u8 = 78;
+pub const INFRADID_SS58PREFIX: u8 = 42;
 
 /// InfraDID Decimals
 pub const INFRADID_DECIMAL: u8 = 18;
