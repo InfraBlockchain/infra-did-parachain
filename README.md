@@ -1,9 +1,9 @@
 <div id="top"></div>
 <p align="center">
-<img src=https://img.shields.io/github/stars/InfraBlockchain/infra-did-substrate?style=for-the-badge&logo=appveyor&color=blue />
-<img src=https://img.shields.io/github/forks/InfraBlockchain/infra-did-substrate?style=for-the-badge&logo=appveyor&color=blue />
-<img src=https://img.shields.io/github/issues/InfraBlockchain/infra-did-substrate?style=for-the-badge&logo=appveyor&color=informational />
-<img src=https://img.shields.io/github/issues-pr/InfraBlockchain/infra-did-substrate?style=for-the-badge&logo=appveyor&color=informational />
+<img src=https://img.shields.io/github/stars/sweatpotato13/substrate-parachain-boilerplate?style=for-the-badge&logo=appveyor&color=blue />
+<img src=https://img.shields.io/github/forks/sweatpotato13/substrate-parachain-boilerplate?style=for-the-badge&logo=appveyor&color=blue />
+<img src=https://img.shields.io/github/issues/sweatpotato13/substrate-parachain-boilerplate?style=for-the-badge&logo=appveyor&color=informational />
+<img src=https://img.shields.io/github/issues-pr/sweatpotato13/substrate-parachain-boilerplate?style=for-the-badge&logo=appveyor&color=informational />
 </p>
 <br />
 <!-- PROJECT LOGO -->
@@ -13,23 +13,23 @@
 
 <br />
 <div align="center">
-  <a href="https://github.com/InfraBlockchain/infra-did-substrate">
+  <a href="https://github.com/sweatpotato13/substrate-parachain-boilerplate">
     <!-- <img src="images/logo.png" alt="Logo" width="80" height="80"> -->
   </a>
 
-<h3 align="center">Infra did substrate node</h3>
+<h3 align="center">Substrate Cumulus Parachain boilerplate</h3>
 
   <p align="center">
-    An DID node using the Substrate Blockchain Framework.
+    Substrate based polkadot parachain boilerplate
     <br />
-    <a href="https://github.com/InfraBlockchain/infra-did-substrate"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/sweatpotato13/substrate-parachain-boilerplate"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/InfraBlockchain/infra-did-substrate">View Demo</a>
+    <a href="https://github.com/sweatpotato13/substrate-parachain-boilerplate">View Demo</a>
     ·
-    <a href="https://github.com/InfraBlockchain/infra-did-substrate/issues">Report Bug</a>
+    <a href="https://github.com/sweatpotato13/substrate-parachain-boilerplate/issues">Report Bug</a>
     ·
-    <a href="https://github.com/InfraBlockchain/infra-did-substrate/issues">Request Feature</a>
+    <a href="https://github.com/sweatpotato13/substrate-parachain-boilerplate/issues">Request Feature</a>
   </p>
 </div>
 
@@ -57,7 +57,9 @@
 
 - [Rust](https://www.rust-lang.org/)
 - [Substrate](https://substrate.io/)
+- [zombienet](https://github.com/paritytech/zombienet)
 - [docker](https://www.docker.com/)
+- [kubernetes](https://kubernetes.io/)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -68,46 +70,24 @@
 This is an example of how you may give instructions on setting up your project locally.
 To get a local copy up and running follow these simple example steps.
 
-### Build locally
+### Build
 
 1. Clone the repo
 
    ```sh
-   git clone https://github.com/InfraBlockchain/infra-did-substrate.git
+   git clone https://github.com/sweatpotato13/substrate-parachain-boilerplate.git
    ```
 
 2. Build
-   ```sh
-   cargo build --release
-   ```
-
-### How to run
-
-1. Use Rust's native cargo command to build and launch the template node:
 
    ```sh
-   cargo run --release -- --dev
+   make build
    ```
 
-### Single-Node Development Chain
-
-This command will start the single-node development chain with non-persistent state:
-
-```bash
-./target/release/node-template --dev
-```
-
-Purge the development chain's state:
-
-```bash
-./target/release/node-template purge-chain --dev
-```
-
-Start the development chain with detailed logging:
-
-```bash
-RUST_BACKTRACE=1 ./target/release/node-template -ldebug --dev
-```
+3. Run standalone dev chain
+   ```sh
+   make dev
+   ```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -132,6 +112,6 @@ Don't forget to give the project a star! Thanks again!
 
 ## Contact
 
-Project Link: [https://github.com/InfraBlockchain/infra-did-substrate](https://github.com/InfraBlockchain/infra-did-substrate)
+Project Link: [https://github.com/sweatpotato13/substrate-parachain-boilerplate](https://github.com/sweatpotato13/substrate-parachain-boilerplate)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
