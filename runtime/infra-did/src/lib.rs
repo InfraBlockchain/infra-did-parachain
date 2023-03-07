@@ -1,18 +1,4 @@
-// Copyright 2020-2023 Manta Network.
-// This file is part of Manta.
-//
-// Manta is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Manta is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Manta.  If not, see <http://www.gnu.org/licenses/>.
+
 
 //! InfraDID Parachain Runtime
 
@@ -75,7 +61,7 @@ use frame_support::{
     dispatch::DispatchClass,
     parameter_types,
     traits::{
-        ConstU32, ConstU8, Contains, Currency, EitherOfDiverse, IsInVec, NeverEnsureOrigin,
+        ConstU32, ConstU8, Contains, Currency, EitherOfDiverse, NeverEnsureOrigin,
         PrivilegeCmp,
     },
     weights::{ConstantMultiplier, Weight},
@@ -225,7 +211,6 @@ impl Contains<RuntimeCall> for BaseFilter {
         // keep CallFilter with explicit true/false for documentation
         match call {
             // Explicitly DISALLOWED calls
-            | RuntimeCall::Assets(_) // Filter Assets. Assets should only be accessed by AssetManager.
             | RuntimeCall::AssetManager(_) // AssetManager is also filtered because all of its extrinsics
                                     // are callable only by Root, and Root calls skip this whole filter.
             // Currently, we filter `register_as_candidate` as this call is not yet ready for community.
@@ -251,6 +236,8 @@ impl Contains<RuntimeCall> for BaseFilter {
             | RuntimeCall::XcmpQueue(_) | RuntimeCall::PolkadotXcm(_) | RuntimeCall::DmpQueue(_) => false,
 
             // Explicitly ALLOWED calls
+            | RuntimeCall::Assets(pallet_assets::Call::transfer {..}
+                | pallet_assets::Call::transfer_keep_alive {..}) // Filter Assets. Assets should only be accessed by AssetManager.
             | RuntimeCall::Authorship(_)
             // Sudo also cannot be filtered because it is used in runtime upgrade.
             | RuntimeCall::Sudo(_)
@@ -907,7 +894,7 @@ pub type Executive = frame_executive::Executive<
     Block,
     frame_system::ChainContext<Runtime>,
     Runtime,
-    AllPalletsReversedWithSystemFirst,
+    AllPalletsWithSystem,
     OnRuntimeUpgradeHooks,
 >;
 
@@ -936,7 +923,7 @@ mod benches {
         [cumulus_pallet_xcmp_queue, XcmpQueue]
         [pallet_xcm_benchmarks::fungible, pallet_xcm_benchmarks::fungible::Pallet::<Runtime>]
         [pallet_xcm_benchmarks::generic, pallet_xcm_benchmarks::generic::Pallet::<Runtime>]
-        // Manta pallets
+        // pallets
         [collator_selection, CollatorSelection]
         [pallet_asset_manager, AssetManager]
         // Nimbus pallets
@@ -952,7 +939,6 @@ impl_runtime_apis! {
 
         fn authorities() -> Vec<AuraId> {
             // NOTE: AuraAPI must exist for node/src/aura_or_nimbus_consensus.rs
-            // But is intentionally DISABLED starting with manta v3.3.0
             vec![]
         }
     }
@@ -1137,7 +1123,7 @@ impl_runtime_apis! {
             let mut list = Vec::<BenchmarkList>::new();
             list_benchmarks!(list, extra);
 
-            let storage_info = AllPalletsReversedWithSystemFirst::storage_info();
+            let storage_info = AllPalletsWithSystem::storage_info();
 
             (list, storage_info)
         }

@@ -1,19 +1,3 @@
-// Copyright 2020-2023 Manta Network.
-// This file is part of Manta.
-//
-// Manta is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Manta is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Manta.  If not, see <http://www.gnu.org/licenses/>.
-
 //! XCM primitives and implementations
 
 use super::{
@@ -291,16 +275,15 @@ where
             Ok((asset_id, amount)) => {
                 if !amount.is_zero() {
                     if let Err(err) = A::mint_into(asset_id, &R::get(), amount) {
-                        log::debug!(target: "manta-xcm", "mint_into failed with {:?}", err);
+                        log::debug!(target: "infra-did-xcm", "mint_into failed with {:?}", err);
                     }
                 }
             }
-            _ => log::debug!(target: "manta-xcm", "take revenue failed matching fungible"),
+            _ => log::debug!(target: "infra-did-xcm", "take revenue failed matching fungible"),
         }
     }
 }
 
-/// Manta's `MatchFungible` implementation.
 /// It resolves the reanchoring logic as well, i.e. it recognize `here()` as
 /// `../parachain(id)`.
 /// `T` should specify a `SelfLocation` in the form of absolute path to the

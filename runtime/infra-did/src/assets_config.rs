@@ -1,19 +1,3 @@
-// Copyright 2020-2023 Manta Network.
-// This file is part of Manta.
-//
-// Manta is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Manta is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Manta.  If not, see <http://www.gnu.org/licenses/>.
-
 use super::{
     weights, xcm_config::SelfReserve, AssetManager, Assets, Balances,
     NativeTokenExistentialDeposit, Runtime, RuntimeEvent, RuntimeOrigin,
@@ -24,7 +8,7 @@ use common_primitives::{
         AssetConfig, AssetIdType, AssetLocation, AssetRegistry, AssetRegistryMetadata,
         AssetStorageMetadata, BalanceType, LocationType, NativeAndNonNative,
     },
-    constants::{ASSET_MANAGER_PALLET_ID, MANTA_PAY_PALLET_ID, INFRADID_DECIMAL},
+    constants::{ASSET_MANAGER_PALLET_ID, INFRADID_DECIMAL},
     types::{AccountId, Balance, CommonAssetId},
 };
 
@@ -69,14 +53,14 @@ impl pallet_assets::Config for Runtime {
     type BenchmarkHelper = ();
 }
 
-pub struct MantaAssetRegistry;
-impl BalanceType for MantaAssetRegistry {
+pub struct CommonAssetRegistry;
+impl BalanceType for CommonAssetRegistry {
     type Balance = Balance;
 }
-impl AssetIdType for MantaAssetRegistry {
+impl AssetIdType for CommonAssetRegistry {
     type AssetId = CommonAssetId;
 }
-impl AssetRegistry for MantaAssetRegistry {
+impl AssetRegistry for CommonAssetRegistry {
     type Metadata = AssetStorageMetadata;
     type Error = sp_runtime::DispatchError;
 
@@ -171,7 +155,7 @@ impl AssetConfig<Runtime> for InfraDIDAssetConfig {
     type NativeAssetLocation = NativeAssetLocation;
     type NativeAssetMetadata = NativeAssetMetadata;
     type StorageMetadata = AssetStorageMetadata;
-    type AssetRegistry = MantaAssetRegistry;
+    type AssetRegistry = CommonAssetRegistry;
     type FungibleLedger = InfraDIDConcreteFungibleLedger;
 }
 

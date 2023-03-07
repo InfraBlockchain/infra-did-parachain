@@ -1,19 +1,3 @@
-// Copyright 2020-2023 Manta Network.
-// This file is part of Manta.
-//
-// Manta is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Manta is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Manta.  If not, see <http://www.gnu.org/licenses/>.
-
 //! unit tests for asset-manager
 
 use crate::{
@@ -257,13 +241,13 @@ fn update_asset() {
 fn check_para_id_info_when_update_asset_location() {
     new_test_ext().execute_with(|| {
         let para_id = 2015;
-        let asset_metadata = create_asset_metadata("Manta", "MANTA", 18, 1u128, false, false);
+        let asset_metadata = create_asset_metadata("Infra", "INFRA", 18, 1u128, false, false);
         let mut native_location = AssetLocation(VersionedMultiLocation::V1(MultiLocation::new(
             1,
             X1(Parachain(para_id)),
         )));
 
-        // registering manta native asset should work.
+        // registering infra native asset should work.
         assert_ok!(AssetManager::register_asset(
             RuntimeOrigin::root(),
             native_location,
@@ -274,18 +258,18 @@ fn check_para_id_info_when_update_asset_location() {
         assert!(crate::AllowedDestParaIds::<Runtime>::contains_key(para_id));
         assert_eq!(crate::AllowedDestParaIds::<Runtime>::get(para_id), Some(1));
 
-        // create a non manta asset.
+        // create a non infra asset.
         let non_native_asset_metadata =
-            create_asset_metadata("Manta", "eMANTA", 18, 1u128, false, false);
+            create_asset_metadata("Infra", "eINFRA", 18, 1u128, false, false);
         let mut non_native_location =
             AssetLocation(VersionedMultiLocation::V1(MultiLocation::new(
                 1,
                 X2(
                     Parachain(para_id),
-                    GeneralKey(WeakBoundedVec::force_from(b"eMANTA".to_vec(), None)),
+                    GeneralKey(WeakBoundedVec::force_from(b"eINFRA".to_vec(), None)),
                 ),
             )));
-        // registering manta non native asset should work.
+        // registering infra non native asset should work.
         assert_ok!(AssetManager::register_asset(
             RuntimeOrigin::root(),
             non_native_location,
@@ -295,13 +279,13 @@ fn check_para_id_info_when_update_asset_location() {
         // ParaId=para_id should have 2 assets.
         assert_eq!(crate::AllowedDestParaIds::<Runtime>::get(para_id), Some(2));
 
-        // Update new para id for manta native location
+        // Update new para id for infra native location
         let new_para_id = para_id + 1;
         native_location = AssetLocation(VersionedMultiLocation::V1(MultiLocation::new(
             1,
             X2(
                 Parachain(new_para_id),
-                GeneralKey(WeakBoundedVec::force_from(b"eMANTA".to_vec(), None)),
+                GeneralKey(WeakBoundedVec::force_from(b"eINFRA".to_vec(), None)),
             ),
         )));
         assert_ok!(AssetManager::update_asset_location(
@@ -323,7 +307,7 @@ fn check_para_id_info_when_update_asset_location() {
             1,
             X2(
                 Parachain(new_para_id_again),
-                GeneralKey(WeakBoundedVec::force_from(b"eMANTA".to_vec(), None)),
+                GeneralKey(WeakBoundedVec::force_from(b"eINFRA".to_vec(), None)),
             ),
         )));
         assert_ok!(AssetManager::update_asset_location(
@@ -385,7 +369,7 @@ fn filter_asset_location_should_work() {
     let kusama_location = AssetLocation(VersionedMultiLocation::V1(MultiLocation::parent()));
 
     let para_id = 2015;
-    let asset_metadata = create_asset_metadata("Manta", "MANTA", 18, 1u128, false, false);
+    let asset_metadata = create_asset_metadata("Infra", "INFRA", 18, 1u128, false, false);
     let location = AssetLocation(VersionedMultiLocation::V1(MultiLocation::new(
         1,
         X1(Parachain(para_id)),
@@ -403,7 +387,7 @@ fn filter_asset_location_should_work() {
             Some(kusama_location.clone())
         );
 
-        // Register manta para chain native token
+        // Register infra para chain native token
         assert_ok!(AssetManager::register_asset(
             RuntimeOrigin::root(),
             location.clone(),
@@ -475,12 +459,12 @@ fn filter_asset_location_should_work() {
 
 #[test]
 fn set_min_xcm_fee_should_work() {
-    let asset_metadata = create_asset_metadata("Manta", "MANTA", 18, 1u128, false, false);
+    let asset_metadata = create_asset_metadata("Infra", "INFRA", 18, 1u128, false, false);
     let location = AssetLocation(VersionedMultiLocation::V1(MultiLocation::new(
         1,
         X2(
             Parachain(2015),
-            GeneralKey(WeakBoundedVec::force_from(b"MANTA".to_vec(), None)),
+            GeneralKey(WeakBoundedVec::force_from(b"INFRA".to_vec(), None)),
         ),
     )));
     new_test_ext().execute_with(|| {

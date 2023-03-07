@@ -1,29 +1,9 @@
-# Copyright 2020-2023 Manta Network.
-# This file is part of Manta.
-#
-# Manta is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Manta is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Manta.  If not, see <http://www.gnu.org/licenses/>.
-
 # This script has three parts which all use the Substrate runtime:
 # - Pallet benchmarking to update the pallet weights
 # - Overhead benchmarking for the Extrinsic and Block weights
 # - Machine benchmarking
 #
 # Should be run on a reference machine to gain accurate benchmarks
-# current reference machine:
-# https://github.com/Manta-Network/Manta/blob/manta/.github/workflows/run_all_benchmarks.yml#L15
-#
-# Should be run from the root of the repo.
 
 while getopts 'bfps:c:v' flag; do
   case "${flag}" in
@@ -68,12 +48,12 @@ done
 
 if [ "$skip_build" != true ]
 then
-  echo "[+] Compiling Manta benchmarks..."
+  echo "[+] Compiling benchmarks..."
   cargo build --profile=production --locked --features=runtime-benchmarks
 fi
 
 # The executable to use.
-MANTA=./target/production/manta
+BIN=./target/production/infradid
 
 # Manually exclude some pallets.
 EXCLUDED_PALLETS=(
@@ -81,7 +61,7 @@ EXCLUDED_PALLETS=(
 
 # Load all pallet names in an array.
 ALL_PALLETS=($(
-  $MANTA benchmark pallet --list --chain=$chain_spec |\
+  $BIN benchmark pallet --list --chain=$chain_spec |\
     tail -n+2 |\
     cut -d',' -f1 |\
     sort |\
@@ -91,7 +71,7 @@ ALL_PALLETS=($(
 # Filter out the excluded pallets by concatenating the arrays and discarding duplicates.
 PALLETS=($({ printf '%s\n' "${ALL_PALLETS[@]}" "${EXCLUDED_PALLETS[@]}"; } | sort | uniq -u))
 
-echo "[+] Benchmarking ${#PALLETS[@]} Manta pallets by excluding ${#EXCLUDED_PALLETS[@]} from ${#ALL_PALLETS[@]}."
+echo "[+] Benchmarking ${#PALLETS[@]} pallets by excluding ${#EXCLUDED_PALLETS[@]} from ${#ALL_PALLETS[@]}."
 
 # Define the error file.
 ERR_FILE="scripts/benchmarking/benchmarking_errors.txt"
@@ -138,7 +118,7 @@ for PALLET in "${PALLETS[@]}"; do
   fi
 
   OUTPUT=$(
-    $MANTA benchmark pallet \
+    $BIN benchmark pallet \
     --chain=$chain_spec \
     --steps=50 \
     --repeat=20 \
@@ -158,7 +138,7 @@ done
 
 echo "[+] Benchmarking the machine..."
 OUTPUT=$(
-  $MANTA benchmark machine --chain=$chain_spec --allow-fail 2>&1
+  $BIN benchmark machine --chain=$chain_spec --allow-fail 2>&1
 )
 # In any case don't write errors to the error file since they're not benchmarking errors.
 echo "[x] Machine benchmark:\n$OUTPUT"
@@ -167,7 +147,7 @@ echo $OUTPUT >> $MACHINE_OUTPUT
 # If `-s` is used, run the storage benchmark.
 if [ ! -z "$storage_folder" ]; then
   OUTPUT=$(
-  $MANTA benchmark storage \
+  $BIN benchmark storage \
     --chain=$chain_spec \
     --state-version=1 \
     --warmups=10 \
