@@ -95,7 +95,7 @@ fn add_remove_params() {
         );
         assert_err!(
             BBSPlusMod::add_params(
-                Origin::signed(1),
+                RuntimeOrigin::signed(1),
                 AddBBSPlusParams {
                     params: params.clone(),
                     nonce: next_nonce
@@ -120,7 +120,7 @@ fn add_remove_params() {
 
         assert_err!(
             BBSPlusMod::add_params(
-                Origin::signed(1),
+                RuntimeOrigin::signed(1),
                 AddBBSPlusParams {
                     params: params.clone(),
                     nonce: next_nonce
@@ -151,7 +151,7 @@ fn add_remove_params() {
         };
         let sig = sign_add_params::<Test>(&author_kp, &ap, author.clone(), 1);
         BBSPlusMod::add_params(
-            Origin::signed(1),
+            RuntimeOrigin::signed(1),
             AddBBSPlusParams {
                 params: params.clone(),
                 nonce: next_nonce,
@@ -192,7 +192,7 @@ fn add_remove_params() {
         };
         let sig = sign_add_params::<Test>(&author_kp, &ap, author.clone(), 1);
         BBSPlusMod::add_params(
-            Origin::signed(1),
+            RuntimeOrigin::signed(1),
             AddBBSPlusParams {
                 params: params_1.clone(),
                 nonce: next_nonce,
@@ -236,7 +236,7 @@ fn add_remove_params() {
             None
         );
         BBSPlusMod::add_params(
-            Origin::signed(1),
+            RuntimeOrigin::signed(1),
             AddBBSPlusParams {
                 params: params_2.clone(),
                 nonce: next_nonce_1,
@@ -280,7 +280,7 @@ fn add_remove_params() {
         };
         let sig = sign_add_params::<Test>(&author_kp, &ap, author.clone(), 1);
         BBSPlusMod::add_params(
-            Origin::signed(1),
+            RuntimeOrigin::signed(1),
             AddBBSPlusParams {
                 params: params_3.clone(),
                 nonce: next_nonce,
@@ -310,7 +310,7 @@ fn add_remove_params() {
         };
         let sig = sign_remove_params(&author_kp, &rp, author.clone(), 1);
         assert_err!(
-            BBSPlusMod::remove_params(Origin::signed(1), rp, sig.clone()),
+            BBSPlusMod::remove_params(RuntimeOrigin::signed(1), rp, sig.clone()),
             Error::<Test>::ParamsDontExist
         );
         check_nonce(&author, next_nonce - 1);
@@ -323,14 +323,14 @@ fn add_remove_params() {
 
         let sig = sign_remove_params(&author_1_kp, &rp, author_1.clone(), 1);
         assert_err!(
-            BBSPlusMod::remove_params(Origin::signed(1), rp.clone(), sig.clone()),
+            BBSPlusMod::remove_params(RuntimeOrigin::signed(1), rp.clone(), sig.clone()),
             Error::<Test>::NotOwner
         );
         check_nonce(&author_1, next_nonce_1 - 1);
 
         rp.nonce = next_nonce;
         let sig = sign_remove_params(&author_kp, &rp, author.clone(), 1);
-        BBSPlusMod::remove_params(Origin::signed(1), rp, sig.clone()).unwrap();
+        BBSPlusMod::remove_params(RuntimeOrigin::signed(1), rp, sig.clone()).unwrap();
         check_nonce(&author, next_nonce);
         next_nonce += 1;
         // Counter doesn't go back
@@ -369,7 +369,7 @@ fn add_remove_params() {
         // Cannot remove as already removed
         assert_err!(
             BBSPlusMod::remove_params(
-                Origin::signed(1),
+                RuntimeOrigin::signed(1),
                 RemoveBBSPlusParams {
                     params_ref: rf,
                     nonce: next_nonce
@@ -386,7 +386,7 @@ fn add_remove_params() {
             nonce: next_nonce_1,
         };
         let sig = sign_remove_params(&author_1_kp, &rp, author_1.clone(), 1);
-        BBSPlusMod::remove_params(Origin::signed(1), rp, sig.clone()).unwrap();
+        BBSPlusMod::remove_params(RuntimeOrigin::signed(1), rp, sig.clone()).unwrap();
         check_nonce(&author_1, next_nonce_1);
         next_nonce_1 += 1;
         // Counter doesn't go back
@@ -421,7 +421,7 @@ fn add_remove_params() {
         // Cannot remove as already removed
         assert_err!(
             BBSPlusMod::remove_params(
-                Origin::signed(1),
+                RuntimeOrigin::signed(1),
                 RemoveBBSPlusParams {
                     params_ref: rf,
                     nonce: next_nonce_1
@@ -438,7 +438,7 @@ fn add_remove_params() {
             nonce: next_nonce,
         };
         let sig = sign_remove_params(&author_kp, &rp, author.clone(), 1);
-        BBSPlusMod::remove_params(Origin::signed(1), rp, sig.clone()).unwrap();
+        BBSPlusMod::remove_params(RuntimeOrigin::signed(1), rp, sig.clone()).unwrap();
         check_nonce(&author, next_nonce);
         next_nonce += 1;
         // Counter doesn't go back
@@ -467,7 +467,7 @@ fn add_remove_params() {
             nonce: next_nonce,
         };
         let sig = sign_remove_params(&author_kp, &rp, author.clone(), 1);
-        BBSPlusMod::remove_params(Origin::signed(1), rp, sig.clone()).unwrap();
+        BBSPlusMod::remove_params(RuntimeOrigin::signed(1), rp, sig.clone()).unwrap();
         check_nonce(&author, next_nonce);
         // Counter doesn't go back
         assert_eq!(
@@ -514,7 +514,7 @@ fn add_remove_public_key() {
             IncId::from(0u8)
         );
         assert_err!(
-            BBSPlusMod::add_public_key(Origin::signed(1), ak, sig.clone()),
+            BBSPlusMod::add_public_key(RuntimeOrigin::signed(1), ak, sig.clone()),
             Error::<Test>::PublicKeyTooBig
         );
         assert_eq!(
@@ -534,7 +534,7 @@ fn add_remove_public_key() {
         };
 
         assert_err!(
-            BBSPlusMod::add_public_key(Origin::signed(1), ak.clone(), sig.clone()),
+            BBSPlusMod::add_public_key(RuntimeOrigin::signed(1), ak.clone(), sig.clone()),
             did::Error::<Test>::InvalidSignature
         );
         assert_eq!(
@@ -549,7 +549,7 @@ fn add_remove_public_key() {
         run_to_block(35);
 
         let sig = sign_add_key(&author_kp, &ak, author.clone(), 1);
-        BBSPlusMod::add_public_key(Origin::signed(1), ak, sig).unwrap();
+        BBSPlusMod::add_public_key(RuntimeOrigin::signed(1), ak, sig).unwrap();
         check_nonce(&author, next_nonce);
         next_nonce += 1;
         assert_eq!(
@@ -575,7 +575,7 @@ fn add_remove_public_key() {
             nonce: next_nonce,
         };
         let sig = sign_add_key(&author_kp, &ak, author.clone(), 1);
-        BBSPlusMod::add_public_key(Origin::signed(1), ak, sig).unwrap();
+        BBSPlusMod::add_public_key(RuntimeOrigin::signed(1), ak, sig).unwrap();
         check_nonce(&author, next_nonce);
         next_nonce += 1;
         assert_eq!(
@@ -609,7 +609,7 @@ fn add_remove_public_key() {
         );
         assert_eq!(BbsPlusKeys::get(&author_1, IncId::from(1u8)), None);
         assert_eq!(BbsPlusKeys::get(&author_1, IncId::from(2u8)), None);
-        BBSPlusMod::add_public_key(Origin::signed(1), ak, sig).unwrap();
+        BBSPlusMod::add_public_key(RuntimeOrigin::signed(1), ak, sig).unwrap();
         check_nonce(&author_1, next_nonce_1);
         next_nonce_1 += 1;
         assert_eq!(
@@ -643,7 +643,7 @@ fn add_remove_public_key() {
             nonce: next_nonce,
         };
         let sig = sign_add_key(&author_kp, &ak, author.clone(), 1);
-        BBSPlusMod::add_public_key(Origin::signed(1), ak, sig).unwrap();
+        BBSPlusMod::add_public_key(RuntimeOrigin::signed(1), ak, sig).unwrap();
         check_nonce(&author, next_nonce);
         next_nonce += 1;
         assert_eq!(
@@ -666,7 +666,7 @@ fn add_remove_public_key() {
         };
         let sig = sign_remove_key(&author_kp, &rk, author.clone(), 1);
         assert_err!(
-            BBSPlusMod::remove_public_key(Origin::signed(1), rk, sig.clone()),
+            BBSPlusMod::remove_public_key(RuntimeOrigin::signed(1), rk, sig.clone()),
             Error::<Test>::PublicKeyDoesntExist
         );
         check_nonce(&author, next_nonce - 1);
@@ -679,7 +679,7 @@ fn add_remove_public_key() {
         };
         let sig = sign_remove_key(&author_kp_1, &rk, author_1.clone(), 1);
         assert_err!(
-            BBSPlusMod::remove_public_key(Origin::signed(1), rk, sig.clone()),
+            BBSPlusMod::remove_public_key(RuntimeOrigin::signed(1), rk, sig.clone()),
             Error::<Test>::NotOwner
         );
 
@@ -690,7 +690,7 @@ fn add_remove_public_key() {
             nonce: next_nonce,
         };
         let sig = sign_remove_key(&author_kp, &rk, author.clone(), 1);
-        BBSPlusMod::remove_public_key(Origin::signed(1), rk.clone(), sig.clone()).unwrap();
+        BBSPlusMod::remove_public_key(RuntimeOrigin::signed(1), rk.clone(), sig.clone()).unwrap();
         check_nonce(&author, next_nonce);
         next_nonce += 1;
 
@@ -721,7 +721,7 @@ fn add_remove_public_key() {
         let sig = sign_remove_key(&author_kp, &rk, author.clone(), 1);
         // Cannot remove as already removed
         assert_err!(
-            BBSPlusMod::remove_public_key(Origin::signed(1), rk, sig.clone()),
+            BBSPlusMod::remove_public_key(RuntimeOrigin::signed(1), rk, sig.clone()),
             Error::<Test>::PublicKeyDoesntExist
         );
         check_nonce(&author, next_nonce - 1);
@@ -735,7 +735,7 @@ fn add_remove_public_key() {
             nonce: next_nonce_1,
         };
         let sig = sign_remove_key(&author_kp_1, &rk, author_1.clone(), 1);
-        BBSPlusMod::remove_public_key(Origin::signed(1), rk.clone(), sig.clone()).unwrap();
+        BBSPlusMod::remove_public_key(RuntimeOrigin::signed(1), rk.clone(), sig.clone()).unwrap();
         check_nonce(&author_1, next_nonce_1);
         next_nonce_1 += 1;
         // Counter doesn't go back
@@ -761,7 +761,7 @@ fn add_remove_public_key() {
         let sig = sign_remove_key(&author_kp_1, &rk, author_1.clone(), 1);
         // Cannot remove as already removed
         assert_err!(
-            BBSPlusMod::remove_public_key(Origin::signed(1), rk, sig.clone()),
+            BBSPlusMod::remove_public_key(RuntimeOrigin::signed(1), rk, sig.clone()),
             Error::<Test>::PublicKeyDoesntExist
         );
         check_nonce(&author_1, next_nonce_1 - 1);
@@ -773,7 +773,7 @@ fn add_remove_public_key() {
             nonce: next_nonce,
         };
         let sig = sign_remove_key(&author_kp, &rk, author.clone(), 1);
-        BBSPlusMod::remove_public_key(Origin::signed(1), rk, sig.clone()).unwrap();
+        BBSPlusMod::remove_public_key(RuntimeOrigin::signed(1), rk, sig.clone()).unwrap();
         check_nonce(&author, next_nonce);
         next_nonce += 1;
         // Counter doesn't go back
@@ -794,7 +794,7 @@ fn add_remove_public_key() {
             nonce: next_nonce,
         };
         let sig = sign_remove_key(&author_kp, &rk, author.clone(), 1);
-        BBSPlusMod::remove_public_key(Origin::signed(1), rk, sig.clone()).unwrap();
+        BBSPlusMod::remove_public_key(RuntimeOrigin::signed(1), rk, sig.clone()).unwrap();
         check_nonce(&author, next_nonce);
         next_nonce += 1;
         // Counter doesn't go back
@@ -819,7 +819,7 @@ fn add_remove_public_key() {
         };
         let sig = sign_add_params::<Test>(&author_kp, &ap, author.clone(), 1);
         BBSPlusMod::add_params(
-            Origin::signed(1),
+            RuntimeOrigin::signed(1),
             AddBBSPlusParams {
                 params: params.clone(),
                 nonce: next_nonce,
@@ -851,7 +851,7 @@ fn add_remove_public_key() {
         };
         let sig = sign_add_key(&author_kp_1, &ak, author_1.clone(), 1);
         assert_err!(
-            BBSPlusMod::add_public_key(Origin::signed(1), ak, sig.clone()),
+            BBSPlusMod::add_public_key(RuntimeOrigin::signed(1), ak, sig.clone()),
             Error::<Test>::ParamsDontExist
         );
         check_nonce(&author_1, next_nonce_1 - 1);
@@ -872,7 +872,7 @@ fn add_remove_public_key() {
             nonce: next_nonce_1,
         };
         let sig = sign_add_key(&author_kp_1, &ak, author_1.clone(), 1);
-        BBSPlusMod::add_public_key(Origin::signed(1), ak, sig.clone()).unwrap();
+        BBSPlusMod::add_public_key(RuntimeOrigin::signed(1), ak, sig.clone()).unwrap();
         check_nonce(&author_1, next_nonce_1);
         assert_eq!(
             ParamsCounter::get(&BBSPlusParamsOwner(author_1)),
@@ -890,7 +890,7 @@ fn add_remove_public_key() {
             nonce: next_nonce,
         };
         let sig = sign_add_key(&author_kp, &ak, author.clone(), 1);
-        BBSPlusMod::add_public_key(Origin::signed(1), ak, sig.clone()).unwrap();
+        BBSPlusMod::add_public_key(RuntimeOrigin::signed(1), ak, sig.clone()).unwrap();
         check_nonce(&author, next_nonce);
         assert_eq!(
             ParamsCounter::get(&BBSPlusParamsOwner(author)),
@@ -924,7 +924,7 @@ fn add_remove_public_key_by_controller() {
             nonce: next_nonce_1,
         };
         let sig = did_sig::<_, _, _>(&add_controllers, &did_1_kp, Controller(did_1), 1);
-        DIDModule::add_controllers(Origin::signed(1), add_controllers, sig).unwrap();
+        DIDModule::add_controllers(RuntimeOrigin::signed(1), add_controllers, sig).unwrap();
         assert!(DIDModule::is_controller(&did_1, &Controller(did.clone())));
         check_did_detail(&did_1, 1, 1, 2, next_nonce_1);
         check_did_detail(&did, 1, 1, 1, next_nonce - 1);
@@ -941,7 +941,7 @@ fn add_remove_public_key_by_controller() {
             nonce: next_nonce,
         };
         let sig = sign_add_key(&did_kp, &ak, did.clone(), 1);
-        BBSPlusMod::add_public_key(Origin::signed(1), ak, sig).unwrap();
+        BBSPlusMod::add_public_key(RuntimeOrigin::signed(1), ak, sig).unwrap();
 
         check_did_detail(&did_1, 2, 1, 2, next_nonce_1 - 1);
         check_did_detail(&did, 1, 1, 1, next_nonce);
@@ -962,7 +962,7 @@ fn add_remove_public_key_by_controller() {
             nonce: next_nonce,
         };
         let sig = sign_remove_key(&did_kp, &rk, did.clone(), 1);
-        BBSPlusMod::remove_public_key(Origin::signed(1), rk.clone(), sig.clone()).unwrap();
+        BBSPlusMod::remove_public_key(RuntimeOrigin::signed(1), rk.clone(), sig.clone()).unwrap();
 
         check_did_detail(&did_1, 2, 1, 2, next_nonce_1 - 1);
         check_did_detail(&did, 1, 1, 1, next_nonce);

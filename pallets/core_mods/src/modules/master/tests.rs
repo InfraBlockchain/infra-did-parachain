@@ -1,5 +1,6 @@
 use codec::Encode;
-// Cannot do `use super::*` as that would import `Call` as `Call` which conflicts with `Call` in `test_common`
+// Cannot do `use super::*` as that would import `Call` as `Call` which conflicts with `Call` in
+// `test_common`
 use super::{
     Call as MasterCall, Event, MasterError, MasterVoteRaw, Members, Membership, PhantomData, Round,
 };
@@ -28,11 +29,11 @@ fn execute_set_members() {
             members: set(&[newdid().0]),
             vote_requirement: 1,
         };
-        let call = Call::MasterMod(MasterCall::set_members {
+        let call = RuntimeCall::MasterMod(MasterCall::set_members {
             membership: new_members.clone(),
         });
         assert_eq!(Round::get(), 0);
-        MasterMod::execute(Origin::signed(0), Box::new(call), vec![]).unwrap();
+        MasterMod::execute(RuntimeOrigin::signed(0), Box::new(call), vec![]).unwrap();
         assert_eq!(Members::get(), new_members);
         assert_eq!(Round::get(), 2);
     });
@@ -46,12 +47,12 @@ fn round_inc() {
             members: set(&[]),
             vote_requirement: 0,
         });
-        let call = Call::System(system::Call::<Test>::set_storage { items: vec![] });
+        let call = RuntimeCall::System(system::Call::<Test>::set_storage { items: vec![] });
         assert_eq!(Round::get(), 0);
-        MasterMod::execute(Origin::signed(0), Box::new(call.clone()), vec![]).unwrap();
+        MasterMod::execute(RuntimeOrigin::signed(0), Box::new(call.clone()), vec![]).unwrap();
         assert_eq!(Round::get(), 1);
         MasterMod::execute_unchecked_weight(
-            Origin::signed(0),
+            RuntimeOrigin::signed(0),
             Box::new(call),
             vec![],
             Weight::from_ref_time(1),
@@ -71,7 +72,7 @@ fn non_root_impossible() {
         });
         let call = Call::System(system::Call::<Test>::remark(vec![]));
         let err =
-            MasterMod::execute(Origin::signed(0), Box::new(call), vec![])
+            MasterMod::execute(RuntimeOrigin::signed(0), Box::new(call), vec![])
                 .unwrap_err();
         assert_eq!(err.error, DispatchError::BadOrigin);
     });
@@ -92,12 +93,12 @@ fn test_events() {
     });
 
     ext().execute_with(|| {
-        let call = Call::System(system::Call::<Test>::set_storage { items: vec![] });
+        let call = RuntimeCall::System(system::Call::<Test>::set_storage { items: vec![] });
         Members::set(Membership {
             members: set(&[]),
             vote_requirement: 0,
         });
-        MasterMod::execute(Origin::signed(0), Box::new(call.clone()), vec![]).unwrap();
+        MasterMod::execute(RuntimeOrigin::signed(0), Box::new(call.clone()), vec![]).unwrap();
         assert_eq!(
             master_events(),
             vec![Event::<Test>::Executed(vec![], Box::new(call))]
@@ -118,7 +119,7 @@ fn test_events() {
 
         run_to_block(15);
 
-        let call = Call::System(system::Call::<Test>::set_storage { items: vec![] });
+        let call = RuntimeCall::System(system::Call::<Test>::set_storage { items: vec![] });
         let sc = MasterVoteRaw {
             _marker: PhantomData,
             proposal: call.encode(),
@@ -130,7 +131,7 @@ fn test_events() {
         let old_nonces = get_nonces(&signers);
 
         let pauth = get_pauth(&sc, &signers);
-        MasterMod::execute(Origin::signed(0), Box::new(call.clone()), pauth).unwrap();
+        MasterMod::execute(RuntimeOrigin::signed(0), Box::new(call.clone()), pauth).unwrap();
         check_nonce_increase(old_nonces, &signers);
         assert_eq!(
             master_events(),
@@ -146,13 +147,13 @@ fn test_events() {
             members: set(&[]),
             vote_requirement: 0,
         });
-        let call = Call::MasterMod(MasterCall::set_members {
+        let call = RuntimeCall::MasterMod(MasterCall::set_members {
             membership: Membership {
                 members: set(&[newdid().0]),
                 vote_requirement: 1,
             },
         });
-        MasterMod::execute(Origin::signed(0), Box::new(call.clone()), vec![]).unwrap();
+        MasterMod::execute(RuntimeOrigin::signed(0), Box::new(call.clone()), vec![]).unwrap();
         assert_eq!(
             master_events(),
             vec![
@@ -169,7 +170,7 @@ fn test_events() {
             vote_requirement: 0,
         });
         let res = MasterMod::execute(
-            Origin::signed(0),
+            RuntimeOrigin::signed(0),
             Box::new(call.clone()),
             vec![],
         );
@@ -189,7 +190,7 @@ fn test_events() {
 fn no_members() {
     ext().execute_with(|| {
         let (dida, didak) = newdid();
-        let call = Call::System(system::Call::<Test>::set_storage { items: vec![] });
+        let call = RuntimeCall::System(system::Call::<Test>::set_storage { items: vec![] });
         let sc = MasterVoteRaw {
             _marker: PhantomData,
             proposal: call.encode(),
@@ -202,7 +203,7 @@ fn no_members() {
 
         let pauth = get_pauth(&sc, &[(dida, &didak)]);
 
-        let err = MasterMod::execute(Origin::signed(0), Box::new(call), pauth).unwrap_err();
+        let err = MasterMod::execute(RuntimeOrigin::signed(0), Box::new(call), pauth).unwrap_err();
         assert_eq!(err, MasterError::<Test>::NotMember.into());
     });
 }
@@ -214,7 +215,7 @@ fn valid_call() {
         let (didb, _didbk) = newdid();
         let (didc, didck) = newdid();
         let kv = (vec![4; 200], vec![5; 200]);
-        let call = Call::System(system::Call::<Test>::set_storage {
+        let call = RuntimeCall::System(system::Call::<Test>::set_storage {
             items: vec![kv.clone()],
         });
         let sc = MasterVoteRaw {
@@ -235,7 +236,7 @@ fn valid_call() {
 
         let pauth = get_pauth(&sc, &signers);
 
-        MasterMod::execute(Origin::signed(0), Box::new(call.clone()), pauth).unwrap();
+        MasterMod::execute(RuntimeOrigin::signed(0), Box::new(call.clone()), pauth).unwrap();
         assert_eq!(sp_io::storage::get(&kv.0), Some(kv.1.to_vec().into()));
         check_nonce_increase(old_nonces, &signers);
     });
@@ -251,7 +252,7 @@ fn all_members_vote() {
         let (didc, didck) = newdid();
 
         let kv = (vec![4; 200], vec![5; 200]);
-        let call = Call::System(system::Call::<Test>::set_storage {
+        let call = RuntimeCall::System(system::Call::<Test>::set_storage {
             items: vec![kv.clone()],
         });
 
@@ -271,7 +272,7 @@ fn all_members_vote() {
 
         let pauth = get_pauth(&sc, &signers);
 
-        MasterMod::execute(Origin::signed(0), Box::new(call.clone()), pauth).unwrap();
+        MasterMod::execute(RuntimeOrigin::signed(0), Box::new(call.clone()), pauth).unwrap();
         assert_eq!(sp_io::storage::get(&kv.0), Some(kv.1.to_vec().into()));
         check_nonce_increase(old_nonces, &signers);
     });
@@ -290,7 +291,7 @@ fn two_successful_rounds_of_voting() {
 
         {
             let kv = (vec![4; 200], vec![5; 200]);
-            let call = Call::System(system::Call::<Test>::set_storage {
+            let call = RuntimeCall::System(system::Call::<Test>::set_storage {
                 items: vec![kv.clone()],
             });
 
@@ -306,14 +307,14 @@ fn two_successful_rounds_of_voting() {
 
             let pauth = get_pauth(&sc, &signers);
 
-            MasterMod::execute(Origin::signed(0), Box::new(call.clone()), pauth).unwrap();
+            MasterMod::execute(RuntimeOrigin::signed(0), Box::new(call.clone()), pauth).unwrap();
             assert_eq!(sp_io::storage::get(&kv.0), Some(kv.1.to_vec().into()));
             check_nonce_increase(old_nonces, &signers);
         }
 
         {
             let kv = (vec![6; 200], vec![9; 200]);
-            let call = Call::System(system::Call::<Test>::set_storage {
+            let call = RuntimeCall::System(system::Call::<Test>::set_storage {
                 items: vec![kv.clone()],
             });
 
@@ -329,7 +330,7 @@ fn two_successful_rounds_of_voting() {
 
             let pauth = get_pauth(&sc, &signers);
 
-            MasterMod::execute(Origin::signed(0), Box::new(call.clone()), pauth).unwrap();
+            MasterMod::execute(RuntimeOrigin::signed(0), Box::new(call.clone()), pauth).unwrap();
             assert_eq!(sp_io::storage::get(&kv.0), Some(kv.1.to_vec().into()));
             check_nonce_increase(old_nonces, &signers);
         }
@@ -346,7 +347,7 @@ fn err_bad_sig() {
             members: set(&[dida, didb]),
             vote_requirement: 1,
         });
-        let call = Box::new(Call::System(system::Call::<Test>::set_storage {
+        let call = Box::new(RuntimeCall::System(system::Call::<Test>::set_storage {
             items: vec![],
         }));
         let sc = MasterVoteRaw {
@@ -358,14 +359,16 @@ fn err_bad_sig() {
         {
             // signing with wrong key
             let pauth = get_pauth(&sc, &[(didb, &didak)]);
-            let err = MasterMod::execute(Origin::signed(0), call.clone(), pauth).unwrap_err();
+            let err =
+                MasterMod::execute(RuntimeOrigin::signed(0), call.clone(), pauth).unwrap_err();
             assert_eq!(err, MasterError::<Test>::BadSig.into());
         }
 
         {
             // signing with wrong key, not in member set
             let pauth = get_pauth(&sc, &[(didc, &didck)]);
-            let err = MasterMod::execute(Origin::signed(0), call.clone(), pauth).unwrap_err();
+            let err =
+                MasterMod::execute(RuntimeOrigin::signed(0), call.clone(), pauth).unwrap_err();
             assert_eq!(err, MasterError::<Test>::NotMember.into());
         }
 
@@ -376,7 +379,8 @@ fn err_bad_sig() {
                 _marker: PhantomData,
             };
             let pauth = get_pauth(&sc, &[(dida, &didak)]);
-            let err = MasterMod::execute(Origin::signed(0), call.clone(), pauth).unwrap_err();
+            let err =
+                MasterMod::execute(RuntimeOrigin::signed(0), call.clone(), pauth).unwrap_err();
             assert_eq!(err, MasterError::<Test>::BadSig.into());
         }
     });
@@ -391,7 +395,7 @@ fn err_not_member() {
             members: set(&[dida]),
             vote_requirement: 1,
         });
-        let call = Box::new(Call::System(system::Call::<Test>::set_storage {
+        let call = Box::new(RuntimeCall::System(system::Call::<Test>::set_storage {
             items: vec![],
         }));
         let sc = MasterVoteRaw {
@@ -400,7 +404,7 @@ fn err_not_member() {
             round_no: 0,
         };
         let pauth = get_pauth(&sc, &[(didc, &didck)]);
-        let err = MasterMod::execute(Origin::signed(0), call.clone(), pauth).unwrap_err();
+        let err = MasterMod::execute(RuntimeOrigin::signed(0), call.clone(), pauth).unwrap_err();
         assert_eq!(err, MasterError::<Test>::NotMember.into());
     });
 }
@@ -413,7 +417,7 @@ fn replay_protec() {
             members: set(&[dida]),
             vote_requirement: 1,
         });
-        let call = Call::System(system::Call::<Test>::set_storage { items: vec![] });
+        let call = RuntimeCall::System(system::Call::<Test>::set_storage { items: vec![] });
         let sc = MasterVoteRaw {
             _marker: PhantomData,
             proposal: call.encode(),
@@ -421,10 +425,11 @@ fn replay_protec() {
         };
         let pauth = get_pauth(&sc, &[(dida, &didak)]);
 
-        MasterMod::execute(Origin::signed(0), Box::new(call.clone()), pauth).unwrap();
+        MasterMod::execute(RuntimeOrigin::signed(0), Box::new(call.clone()), pauth).unwrap();
 
         let pauth = get_pauth(&sc, &[(dida, &didak)]);
-        let err = MasterMod::execute(Origin::signed(0), Box::new(call.clone()), pauth).unwrap_err();
+        let err = MasterMod::execute(RuntimeOrigin::signed(0), Box::new(call.clone()), pauth)
+            .unwrap_err();
         assert_eq!(err, MasterError::<Test>::BadSig.into());
     });
 }
@@ -434,7 +439,7 @@ fn err_insufficient_votes() {
     ext().execute_with(|| {
         let (dida, didak) = newdid();
         let (didb, _didbk) = newdid();
-        let call = Call::System(system::Call::<Test>::set_storage { items: vec![] });
+        let call = RuntimeCall::System(system::Call::<Test>::set_storage { items: vec![] });
         let sc = MasterVoteRaw {
             _marker: PhantomData,
             proposal: call.encode(),
@@ -446,7 +451,8 @@ fn err_insufficient_votes() {
         });
 
         let pauth = get_pauth(&sc, &[(dida, &didak)]);
-        let err = MasterMod::execute(Origin::signed(0), Box::new(call.clone()), pauth).unwrap_err();
+        let err = MasterMod::execute(RuntimeOrigin::signed(0), Box::new(call.clone()), pauth)
+            .unwrap_err();
         assert_eq!(err, MasterError::<Test>::InsufficientVotes.into());
     });
 }
@@ -467,7 +473,7 @@ fn err_zero_vote_requirement() {
         .iter()
         .cloned()
         {
-            let err = MasterMod::set_members(Origin::root(), m).unwrap_err();
+            let err = MasterMod::set_members(RuntimeOrigin::root(), m).unwrap_err();
             assert_eq!(err, MasterError::<Test>::ZeroVoteRequirement.into());
         }
     });
@@ -497,7 +503,7 @@ fn err_vote_requirement_to_high() {
         .iter()
         .cloned()
         {
-            let err = MasterMod::set_members(Origin::root(), m).unwrap_err();
+            let err = MasterMod::set_members(RuntimeOrigin::root(), m).unwrap_err();
             assert_eq!(err, MasterError::<Test>::VoteRequirementTooHigh.into());
         }
     });

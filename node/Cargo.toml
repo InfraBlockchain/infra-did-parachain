@@ -105,6 +105,8 @@ xcm = { git = "https://github.com/paritytech/polkadot.git", branch = "release-v0
 infra-did-runtime = { path = '../runtime/infra-did' }
 common-primitives = { path = '../primitives/common' }
 session-key-primitives = { path = '../primitives/session-keys' }
+core_mods_rpc = {path = "../pallets/core_mods/rpc"}
+
 
 [build-dependencies]
 substrate-build-script-utils = { git = 'https://github.com/paritytech/substrate.git', branch = "polkadot-v0.9.37" }

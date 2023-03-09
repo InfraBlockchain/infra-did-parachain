@@ -71,7 +71,7 @@ mod errors {
             },
         };
 
-        let err = RevoMod::new_registry(Origin::signed(ABBA), ar).unwrap_err();
+        let err = RevoMod::new_registry(RuntimeOrigin::signed(ABBA), ar).unwrap_err();
         assert_eq!(err, RevErr::<Test>::InvalidPolicy.into());
     }
 
@@ -91,7 +91,7 @@ mod errors {
                     add_only: false,
                 },
             };
-            RevoMod::new_registry(Origin::signed(ABBA), ar).unwrap();
+            RevoMod::new_registry(RuntimeOrigin::signed(ABBA), ar).unwrap();
 
             let rev = RevokeRaw {
                 _marker: PhantomData,
@@ -101,7 +101,7 @@ mod errors {
             let pauth = get_pauth(&rev, signers);
             dbg!(&rev);
             dbg!(&pauth);
-            RevoMod::revoke(Origin::signed(ABBA), rev, pauth).unwrap_err()
+            RevoMod::revoke(RuntimeOrigin::signed(ABBA), rev, pauth).unwrap_err()
         }
 
         run_to_block(10);
@@ -151,7 +151,7 @@ mod errors {
             id: registry_id,
             new_registry: reg,
         };
-        RevoMod::new_registry(Origin::signed(ABBA), ar).unwrap();
+        RevoMod::new_registry(RuntimeOrigin::signed(ABBA), ar).unwrap();
 
         let unrevoke = UnRevokeRaw {
             _marker: PhantomData,
@@ -159,7 +159,7 @@ mod errors {
             revoke_ids: once(Default::default()).collect(),
         };
         let ur_proof = get_pauth(&unrevoke, &[(DIDA, &kpa)]);
-        RevoMod::unrevoke(Origin::signed(ABBA), unrevoke.clone(), ur_proof).unwrap();
+        RevoMod::unrevoke(RuntimeOrigin::signed(ABBA), unrevoke.clone(), ur_proof).unwrap();
 
         let rev = RevokeRaw {
             _marker: PhantomData,
@@ -168,12 +168,12 @@ mod errors {
         };
         let ur_proof = get_pauth(&unrevoke, &[(DIDA, &kpa)]);
         assert_eq!(
-            RevoMod::revoke(Origin::signed(ABBA), rev, ur_proof).unwrap_err(),
+            RevoMod::revoke(RuntimeOrigin::signed(ABBA), rev, ur_proof).unwrap_err(),
             RevErr::<Test>::NotAuthorized.into()
         );
 
         let ur_proof = get_pauth(&unrevoke, &[(DIDA, &kpa)]);
-        RevoMod::unrevoke(Origin::signed(ABBA), unrevoke.clone(), ur_proof).unwrap();
+        RevoMod::unrevoke(RuntimeOrigin::signed(ABBA), unrevoke.clone(), ur_proof).unwrap();
     }
 
     #[test]
@@ -190,8 +190,8 @@ mod errors {
             id: RGA,
             new_registry: reg,
         };
-        RevoMod::new_registry(Origin::signed(ABBA), ar.clone()).unwrap();
-        let err = RevoMod::new_registry(Origin::signed(ABBA), ar.clone()).unwrap_err();
+        RevoMod::new_registry(RuntimeOrigin::signed(ABBA), ar.clone()).unwrap();
+        let err = RevoMod::new_registry(RuntimeOrigin::signed(ABBA), ar.clone()).unwrap_err();
         assert_eq!(err, RevErr::<Test>::RegExists.into());
     }
 
@@ -207,7 +207,7 @@ mod errors {
 
         assert_eq!(
             RevoMod::revoke(
-                Origin::signed(ABBA),
+                RuntimeOrigin::signed(ABBA),
                 RevokeRaw {
                     _marker: PhantomData,
                     registry_id,
@@ -219,7 +219,7 @@ mod errors {
         );
         assert_eq!(
             RevoMod::unrevoke(
-                Origin::signed(ABBA),
+                RuntimeOrigin::signed(ABBA),
                 UnRevokeRaw {
                     _marker: PhantomData,
                     registry_id,
@@ -231,7 +231,7 @@ mod errors {
         );
         assert_eq!(
             RevoMod::remove_registry(
-                Origin::signed(ABBA),
+                RuntimeOrigin::signed(ABBA),
                 RemoveRegistryRaw {
                     _marker: PhantomData,
                     registry_id
@@ -259,7 +259,7 @@ mod errors {
             },
         };
 
-        assert_noop!(RevoMod::new_registry(Origin::signed(ABBA), ar), err);
+        assert_noop!(RevoMod::new_registry(RuntimeOrigin::signed(ABBA), ar), err);
     }
 
     #[test]
@@ -279,7 +279,7 @@ mod errors {
             id: RGA,
             new_registry: reg,
         };
-        RevoMod::new_registry(Origin::signed(ABBA), ar.clone()).unwrap();
+        RevoMod::new_registry(RuntimeOrigin::signed(ABBA), ar.clone()).unwrap();
         let revoke_raw = RevokeRaw {
             _marker: PhantomData,
             registry_id,
@@ -288,7 +288,7 @@ mod errors {
         let proof = get_pauth(&revoke_raw, &[(DIDA, &kpa)]);
 
         assert_noop!(
-            RevoMod::revoke(Origin::signed(ABBA), revoke_raw, proof),
+            RevoMod::revoke(RuntimeOrigin::signed(ABBA), revoke_raw, proof),
             err
         );
     }
@@ -314,7 +314,7 @@ mod errors {
             },
         };
 
-        RevoMod::new_registry(Origin::signed(ABBA), ar).unwrap();
+        RevoMod::new_registry(RuntimeOrigin::signed(ABBA), ar).unwrap();
 
         let rev = RevokeRaw {
             _marker: PhantomData,
@@ -325,7 +325,10 @@ mod errors {
 
         // Increase nonce to make the auth chekc fail
         inc_nonce(&DIDA);
-        assert_eq!(RevoMod::revoke(Origin::signed(ABBA), rev, proof), err);
+        assert_eq!(
+            RevoMod::revoke(RuntimeOrigin::signed(ABBA), rev, proof),
+            err
+        );
 
         let unrevoke = UnRevokeRaw {
             _marker: PhantomData,
@@ -337,7 +340,7 @@ mod errors {
         // Increase nonce to make the auth check fail
         inc_nonce(&DIDA);
         assert_eq!(
-            RevoMod::unrevoke(Origin::signed(ABBA), unrevoke, proof,),
+            RevoMod::unrevoke(RuntimeOrigin::signed(ABBA), unrevoke, proof,),
             err
         );
 
@@ -350,7 +353,7 @@ mod errors {
         // Increase nonce to make the auth check fail
         inc_nonce(&DIDA);
         assert_eq!(
-            RevoMod::remove_registry(Origin::signed(ABBA), remove, proof,),
+            RevoMod::remove_registry(RuntimeOrigin::signed(ABBA), remove, proof,),
             err
         );
     }
@@ -377,7 +380,7 @@ mod errors {
             },
         };
 
-        RevoMod::new_registry(Origin::signed(ABBA), ar).unwrap();
+        RevoMod::new_registry(RuntimeOrigin::signed(ABBA), ar).unwrap();
 
         let unrevoke = UnRevokeRaw {
             _marker: PhantomData,
@@ -386,7 +389,7 @@ mod errors {
         };
         let proof = get_pauth(&unrevoke, &[(DIDA, &kpa)]);
         assert_eq!(
-            RevoMod::unrevoke(Origin::signed(ABBA), unrevoke, proof),
+            RevoMod::unrevoke(RuntimeOrigin::signed(ABBA), unrevoke, proof),
             err
         );
 
@@ -396,7 +399,7 @@ mod errors {
         };
         let proof = get_pauth(&remove, &[(DIDA, &kpa)]);
         assert_eq!(
-            RevoMod::remove_registry(Origin::signed(ABBA), remove, proof),
+            RevoMod::remove_registry(RuntimeOrigin::signed(ABBA), remove, proof),
             err
         );
     }
@@ -451,7 +454,7 @@ mod calls {
                 new_registry: reg.clone(),
             };
             assert!(!Registries::contains_key(&reg_id));
-            RevoMod::new_registry(Origin::signed(ABBA), ar).unwrap();
+            RevoMod::new_registry(RuntimeOrigin::signed(ABBA), ar).unwrap();
             assert!(Registries::contains_key(reg_id));
             assert_eq!(Registries::get(reg_id).unwrap(), reg);
         }
@@ -476,7 +479,7 @@ mod calls {
             new_registry: Registry { policy, add_only },
         };
 
-        RevoMod::new_registry(Origin::signed(ABBA), ar).unwrap();
+        RevoMod::new_registry(RuntimeOrigin::signed(ABBA), ar).unwrap();
 
         let cases: &[&[RevokeId]] = &[
             // &[],
@@ -495,7 +498,7 @@ mod calls {
             };
             let proof = get_pauth(&revoke, &[(DIDA, &kpa)]);
             let old_nonces = get_nonces(&[((DIDA, &kpa))]);
-            RevoMod::revoke(Origin::signed(ABBA), revoke, proof).unwrap();
+            RevoMod::revoke(RuntimeOrigin::signed(ABBA), revoke, proof).unwrap();
             assert!(ids
                 .iter()
                 .all(|id| Revocations::contains_key(registry_id, id)));
@@ -530,7 +533,7 @@ mod calls {
             new_registry: Registry { policy, add_only },
         };
 
-        RevoMod::new_registry(Origin::signed(ABBA), ar).unwrap();
+        RevoMod::new_registry(RuntimeOrigin::signed(ABBA), ar).unwrap();
 
         let cases: &[(Action, &[RevokeId], u32)] = &[
             //(Action::UnRevo, &[], line!()),
@@ -561,7 +564,7 @@ mod calls {
                     };
                     let proof = get_pauth(&revoke, &[(DIDA, &kpa)]);
                     let old_nonces = get_nonces(&[((DIDA, &kpa))]);
-                    RevoMod::revoke(Origin::signed(ABBA), revoke, proof).unwrap();
+                    RevoMod::revoke(RuntimeOrigin::signed(ABBA), revoke, proof).unwrap();
                     check_nonce_increase(old_nonces, &[((DIDA, &kpa))]);
                 }
                 Action::UnRevo => {
@@ -572,7 +575,7 @@ mod calls {
                     };
                     let old_nonces = get_nonces(&[((DIDA, &kpa))]);
                     let proof = get_pauth(&unrevoke, &[(DIDA, &kpa)]);
-                    RevoMod::unrevoke(Origin::signed(ABBA), unrevoke, proof).unwrap();
+                    RevoMod::unrevoke(RuntimeOrigin::signed(ABBA), unrevoke, proof).unwrap();
                     check_nonce_increase(old_nonces, &[((DIDA, &kpa))]);
                 }
                 Action::AsrtRv => {
@@ -607,7 +610,7 @@ mod calls {
             new_registry: reg.clone(),
         };
 
-        RevoMod::new_registry(Origin::signed(ABBA), ar).unwrap();
+        RevoMod::new_registry(RuntimeOrigin::signed(ABBA), ar).unwrap();
         assert!(Registries::contains_key(registry_id));
 
         // destroy reg
@@ -617,7 +620,7 @@ mod calls {
         };
         let proof = get_pauth(&rem, &[(DIDA, &kpa)]);
         let old_nonces = get_nonces(&[((DIDA, &kpa))]);
-        RevoMod::remove_registry(Origin::signed(ABBA), rem, proof).unwrap();
+        RevoMod::remove_registry(RuntimeOrigin::signed(ABBA), rem, proof).unwrap();
         check_nonce_increase(old_nonces, &[((DIDA, &kpa))]);
 
         // assert not exists
@@ -717,7 +720,7 @@ mod test {
         };
 
         assert_eq!(RevoMod::get_revocation_registry(registry_id), None);
-        RevoMod::new_registry(Origin::signed(ABBA), ar).unwrap();
+        RevoMod::new_registry(RuntimeOrigin::signed(ABBA), ar).unwrap();
         assert_eq!(RevoMod::get_revocation_registry(registry_id), Some(reg));
     }
 
@@ -740,7 +743,7 @@ mod test {
             new_registry: reg.clone(),
         };
 
-        RevoMod::new_registry(Origin::signed(ABBA), ar).unwrap();
+        RevoMod::new_registry(RuntimeOrigin::signed(ABBA), ar).unwrap();
         let revoke = RevokeRaw {
             _marker: PhantomData,
             registry_id,
@@ -749,7 +752,7 @@ mod test {
         let proof = get_pauth(&revoke, &[(DIDA, &kpa)]);
 
         assert_eq!(RevoMod::get_revocation_status(registry_id, revid), None);
-        RevoMod::revoke(Origin::signed(ABBA), revoke, proof).unwrap();
+        RevoMod::revoke(RuntimeOrigin::signed(ABBA), revoke, proof).unwrap();
         assert_eq!(RevoMod::get_revocation_status(registry_id, revid), Some(()));
     }
 }

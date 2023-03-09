@@ -20,7 +20,7 @@ fn create_blob(
     println!("content: {:?}", content.clone());
 
     BlobMod::new(
-        Origin::signed(ABBA),
+        RuntimeOrigin::signed(ABBA),
         AddBlob {
             blob: bl.clone(),
             nonce,
@@ -147,7 +147,7 @@ fn err_invalid_sig() {
             };
             check_nonce(&author, 10);
             let err = BlobMod::new(
-                Origin::signed(ABBA),
+                RuntimeOrigin::signed(ABBA),
                 AddBlob {
                     blob: bl.clone(),
                     nonce: 10 + 1,
@@ -171,7 +171,7 @@ fn err_invalid_sig() {
             };
             check_nonce(&author, 20);
             let err = BlobMod::new(
-                Origin::signed(ABBA),
+                RuntimeOrigin::signed(ABBA),
                 AddBlob {
                     blob: bl.clone(),
                     nonce: 20 + 1,

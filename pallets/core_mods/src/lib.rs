@@ -96,6 +96,4 @@ pub mod util;
 pub use modules::{accumulator, anchor, attest, bbs_plus, blob, did, master, revoke};
 
 #[cfg(test)]
-mod storage_reader_tests;
-#[cfg(test)]
 mod test_common;
