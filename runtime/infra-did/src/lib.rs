@@ -1,5 +1,3 @@
-
-
 //! InfraDID Parachain Runtime
 
 #![allow(clippy::identity_op)] // keep e.g. 1 * DAYS for legibility
@@ -32,7 +30,7 @@ mod wasm_handlers {
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 pub use core_mods::{
-    accumulator, anchor, attest, bbs_plus, blob, did, keys_and_sigs, master, revoke,
+    accumulator, anchor, attest, bbs_plus, blob, did, keys_and_sigs, master, revoke, trusted_entity,
 };
 
 use core_mods::util::IncId;
@@ -61,8 +59,7 @@ use frame_support::{
     dispatch::DispatchClass,
     parameter_types,
     traits::{
-        ConstU32, ConstU8, Contains, Currency, EitherOfDiverse, NeverEnsureOrigin,
-        PrivilegeCmp,
+        ConstU32, ConstU8, Contains, Currency, EitherOfDiverse, NeverEnsureOrigin, PrivilegeCmp,
     },
     weights::{ConstantMultiplier, Weight},
     PalletId,
@@ -281,7 +278,7 @@ impl Contains<RuntimeCall> for BaseFilter {
             | RuntimeCall::XTokens(orml_xtokens::Call::transfer {..}
                 | orml_xtokens::Call::transfer_multicurrencies  {..})
             | RuntimeCall::Preimage(_)
-            | RuntimeCall::Utility(_)     
+            | RuntimeCall::Utility(_)
             | RuntimeCall::BbsPlus(_)
             | RuntimeCall::DIDModule(_)
             | RuntimeCall::Revoke(_)
@@ -289,6 +286,7 @@ impl Contains<RuntimeCall> for BaseFilter {
             | RuntimeCall::Master(_)
             | RuntimeCall::Anchor(_)
             | RuntimeCall::Attest(_)
+            | RuntimeCall::TrustedEntity(_)
             | RuntimeCall::Accumulator(_) => true,
 
             // DISALLOW anything else
@@ -788,6 +786,11 @@ impl attest::Config for Runtime {
     type StorageWeight = StorageWeight;
 }
 
+impl trusted_entity::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type MaxControllers = MaxControllers;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub enum Runtime where
@@ -857,6 +860,7 @@ construct_runtime!(
         Anchor: anchor::{Pallet, Call, Storage, Event<T>} = 56,
         Attest: attest::{Pallet, Call, Storage} = 57,
         Accumulator: accumulator::{Pallet, Call, Storage, Event} = 58,
+        TrustedEntity: trusted_entity::{Pallet, Call, Storage, Event} = 59,
     }
 );
 

@@ -3,12 +3,13 @@
 use crate::{
     accumulator, anchor, attest, bbs_plus, blob,
     did::{self, Did, DidKey, DidSignature},
-    keys_and_sigs, master, revoke, util, StateChange, ToStateChange,
+    keys_and_sigs, master, revoke, trusted_entity, util, StateChange, ToStateChange,
 };
 
 use crate::{
     keys_and_sigs::SigValue,
     revoke::{Policy, RegistryId, RevokeId},
+    trusted_entity::Policy as TrustedEntityPolicy,
 };
 use codec::{Decode, Encode};
 use frame_support::{
@@ -46,6 +47,7 @@ frame_support::construct_runtime!(
         AttestMod: attest::{Pallet, Call, Storage},
         BBSPlusMod: bbs_plus::{Pallet, Call, Storage, Event},
         AccumMod: accumulator::{Pallet, Call, Storage, Event},
+        TrustedEntityMod: trusted_entity::{Pallet, Call, Storage, Event},
     }
 );
 
@@ -58,6 +60,7 @@ pub enum TestEvent {
     Unknown,
     BBSPlus(bbs_plus::Event),
     Accum(accumulator::Event),
+    TrustedEntity(trusted_entity::Event),
 }
 
 impl From<system::Event<Test>> for TestEvent {
@@ -111,6 +114,12 @@ impl From<bbs_plus::Event> for TestEvent {
 impl From<accumulator::Event> for TestEvent {
     fn from(other: accumulator::Event) -> Self {
         Self::Accum(other)
+    }
+}
+
+impl From<trusted_entity::Event> for TestEvent {
+    fn from(other: trusted_entity::Event) -> Self {
+        Self::TrustedEntity(other)
     }
 }
 
@@ -187,6 +196,11 @@ impl crate::did::Config for Test {
 }
 
 impl crate::revoke::Config for Test {
+    type RuntimeEvent = TestEvent;
+    type MaxControllers = MaxControllers;
+}
+
+impl crate::trusted_entity::Config for Test {
     type RuntimeEvent = TestEvent;
     type MaxControllers = MaxControllers;
 }
@@ -289,6 +303,11 @@ pub fn ext() -> sp_io::TestExternalities {
 /// create a OneOf policy
 pub fn oneof(dids: &[Did]) -> Policy {
     Policy::OneOf(dids.iter().cloned().collect())
+}
+
+/// create a OneOf policy
+pub fn trusted_entity_oneof(dids: &[Did]) -> TrustedEntityPolicy {
+    TrustedEntityPolicy::OneOf(dids.iter().cloned().collect())
 }
 
 /// generate a random keypair

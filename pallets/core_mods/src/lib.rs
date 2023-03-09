@@ -37,7 +37,10 @@ def_state_change! {
         accumulator::RemoveAccumulatorPublicKey,
         accumulator::AddAccumulator,
         accumulator::UpdateAccumulator,
-        accumulator::RemoveAccumulator
+        accumulator::RemoveAccumulator,
+        trusted_entity::AddTrustedEntity,
+        trusted_entity::RemoveTrustedEntity,
+        trusted_entity::RemoveAuthorizer
 }
 
 /// Converts the given entity to the state change.
@@ -93,7 +96,9 @@ pub mod runtime_api;
 pub mod types;
 pub mod util;
 
-pub use modules::{accumulator, anchor, attest, bbs_plus, blob, did, master, revoke};
+pub use modules::{
+    accumulator, anchor, attest, bbs_plus, blob, did, master, revoke, trusted_entity,
+};
 
 #[cfg(test)]
 mod test_common;
