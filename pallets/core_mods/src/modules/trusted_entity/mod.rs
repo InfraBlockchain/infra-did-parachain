@@ -1,6 +1,7 @@
 use crate as dock;
 use crate::{
     did::{self, Did, DidSignature},
+    keys_and_sigs::{SigValue, ED25519_WEIGHT, SECP256K1_WEIGHT, SR25519_WEIGHT},
     util::{NonceError, WithNonce},
     Action, StorageVersion, ToStateChange,
 };
@@ -11,13 +12,16 @@ use sp_std::vec::Vec;
 
 pub use actions::*;
 use frame_support::{
-    decl_error, decl_event, decl_module, decl_storage, dispatch::DispatchResult, ensure,
+    decl_error, decl_event, decl_module, decl_storage,
+    dispatch::DispatchResult,
+    ensure,
     traits::Get,
+    weights::{RuntimeDbWeight, Weight},
 };
 use frame_system::{self as system, ensure_signed};
 use sp_runtime::traits::Hash;
 use sp_std::prelude::*;
-// use weights::*;
+use weights::*;
 
 mod actions;
 #[cfg(feature = "runtime-benchmarks")]
@@ -25,7 +29,7 @@ mod benchmarks;
 mod r#impl;
 #[cfg(test)]
 pub mod tests;
-// mod weights;
+mod weights;
 
 pub trait Config: system::Config + did::Config {
     type RuntimeEvent: From<Event> + Into<<Self as system::Config>::RuntimeEvent>;
@@ -91,6 +95,38 @@ pub struct Authorizer {
     /// Who is allowed to update this authorizer.
     pub policy: Policy,
     pub add_only: bool,
+}
+
+/// Return counts of different signature types in given `DidSigs` as 3-Tuple as (no. of Sr22519 sigs,
+/// no. of Ed25519 Sigs, no. of Secp256k1 sigs). Useful for weight calculation and thus the return
+/// type is in `Weight` but realistically, it should fit in a u8
+fn count_sig_types<T: frame_system::Config>(auth: &[DidSigs<T>]) -> (u64, u64, u64) {
+    let mut sr = 0;
+    let mut ed = 0;
+    let mut secp = 0;
+    for a in auth.iter() {
+        match a.sig.sig {
+            SigValue::Sr25519(_) => sr += 1,
+            SigValue::Ed25519(_) => ed += 1,
+            SigValue::Secp256k1(_) => secp += 1,
+        }
+    }
+    (sr, ed, secp)
+}
+
+/// Computes weight of the given `DidSigs`. Considers the no. and types of signatures and no. of reads. Disregards
+/// message size as messages are hashed giving the same output size and hashing itself is very cheap.
+/// The extrinsic using it might decide to consider adding some weight proportional to the message size.
+pub fn get_weight_for_did_sigs<T: frame_system::Config>(
+    auth: &[DidSigs<T>],
+    db_weights: RuntimeDbWeight,
+) -> Weight {
+    let (sr, ed, secp) = count_sig_types(auth);
+    db_weights
+        .reads(auth.len() as u64)
+        .saturating_add(SR25519_WEIGHT.saturating_mul(sr))
+        .saturating_add(ED25519_WEIGHT.saturating_mul(ed))
+        .saturating_add(SECP256K1_WEIGHT.saturating_mul(secp))
 }
 
 decl_event!(
@@ -164,7 +200,7 @@ decl_module! {
         /// Returns an error if `id` is already in use as a authrorizer id.
         ///
         /// Returns an error if `authrorizer.policy` is invalid.
-        #[weight = 1]
+        #[weight = SubstrateWeight::<T>::new_authorizer(add_authorizer.new_authorizer.policy.len())]
         pub fn new_authorizer(
             origin,
             add_authorizer: AddAuthorizer
@@ -184,7 +220,7 @@ decl_module! {
         ///
         /// Returns an error if `proof` does not satisfy the policy requirements of the authorizer
         /// referenced by `entity.authorizer_id`.
-        #[weight = 1]
+        #[weight = SubstrateWeight::<T>::add_trusted_entity(&proof[0])(entity.len())]
         pub fn add_trusted_entity(
             origin,
             entity: dock::trusted_entity::AddTrustedEntityRaw<T>,
@@ -207,7 +243,7 @@ decl_module! {
         ///
         /// Returns an error if `proof` does not satisfy the policy requirements of the authorizer
         /// referenced by `entity.authorizer_id`.
-        #[weight = 1]
+        #[weight = SubstrateWeight::<T>::remove_trusted_entity(&proof[0])(entity.len())]
         pub fn remove_trusted_entity(
             origin,
             entity: dock::trusted_entity::RemoveTrustedEntityRaw<T>,
@@ -232,7 +268,7 @@ decl_module! {
         ///
         /// Returns an error if `proof` does not satisfy the policy requirements of the authorizer
         /// referenced by `removal.authorizer_id`.
-        #[weight = 1]
+        #[weight = SubstrateWeight::<T>::remove_authorizer(&proof[0])]
         pub fn remove_authorizer(
             origin,
             removal: dock::trusted_entity::RemoveAuthorizerRaw<T>,
@@ -243,5 +279,31 @@ decl_module! {
             Self::try_exec_removable_action_over_authorizer(removal, proof, Self::remove_authorizer_)?;
             Ok(())
         }
+    }
+}
+
+impl<T: frame_system::Config> SubstrateWeight<T> {
+    fn add_trusted_entity(DidSigs { sig, .. }: &DidSigs<T>) -> fn(u32) -> Weight {
+        match sig.sig {
+            SigValue::Sr25519(_) => Self::add_trusted_entity_sr25519,
+            SigValue::Ed25519(_) => Self::add_trusted_entity_ed25519,
+            SigValue::Secp256k1(_) => Self::add_trusted_entity_secp256k1,
+        }
+    }
+
+    fn remove_trusted_entity(DidSigs { sig, .. }: &DidSigs<T>) -> fn(u32) -> Weight {
+        match sig.sig {
+            SigValue::Sr25519(_) => Self::remove_trusted_entity_sr25519,
+            SigValue::Ed25519(_) => Self::remove_trusted_entity_ed25519,
+            SigValue::Secp256k1(_) => Self::remove_trusted_entity_secp256k1,
+        }
+    }
+
+    fn remove_authorizer(DidSigs { sig, .. }: &DidSigs<T>) -> Weight {
+        (match sig.sig {
+            SigValue::Sr25519(_) => Self::remove_authorizer_sr25519,
+            SigValue::Ed25519(_) => Self::remove_authorizer_ed25519,
+            SigValue::Secp256k1(_) => Self::remove_authorizer_secp256k1,
+        }())
     }
 }
