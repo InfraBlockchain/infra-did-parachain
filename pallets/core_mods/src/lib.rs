@@ -38,8 +38,10 @@ def_state_change! {
         accumulator::AddAccumulator,
         accumulator::UpdateAccumulator,
         accumulator::RemoveAccumulator,
-        trusted_entity::AddTrustedEntity,
-        trusted_entity::RemoveTrustedEntity,
+        trusted_entity::AddIssuer,
+        trusted_entity::RemoveIssuer,
+        trusted_entity::AddVerifier,
+        trusted_entity::RemoveVerifier,
         trusted_entity::RemoveAuthorizer
 }
 
