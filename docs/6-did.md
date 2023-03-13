@@ -1,5 +1,43 @@
 # did
 
+## Runtime
+
+```rust
+parameter_types! {
+    pub const MaxDidDocRefSize: u16 = 1024;
+    pub const DidDocRefPerByteWeight: Weight = Weight::from_ref_time(10);
+    pub const MaxServiceEndpointIdSize: u16 = 1024;
+    pub const ServiceEndpointIdPerByteWeight: Weight = Weight::from_ref_time(10);
+    pub const MaxServiceEndpointOrigins: u16 = 64;
+    pub const MaxServiceEndpointOriginSize: u16 = 1025;
+    pub const ServiceEndpointOriginPerByteWeight: Weight = Weight::from_ref_time(10);
+}
+
+impl did::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type MaxDidDocRefSize = MaxDidDocRefSize;
+    type DidDocRefPerByteWeight = DidDocRefPerByteWeight;
+    type MaxServiceEndpointIdSize = MaxServiceEndpointIdSize;
+    type ServiceEndpointIdPerByteWeight = ServiceEndpointIdPerByteWeight;
+    type MaxServiceEndpointOrigins = MaxServiceEndpointOrigins;
+    type MaxServiceEndpointOriginSize = MaxServiceEndpointOriginSize;
+    type ServiceEndpointOriginPerByteWeight = ServiceEndpointOriginPerByteWeight;
+}
+
+construct_runtime!(
+    pub enum Runtime where
+        Block = Block,
+        NodeBlock = opaque::Block,
+        UncheckedExtrinsic = UncheckedExtrinsic,
+    {
+        /* snip */
+        DIDModule: did::{Pallet, Call, Storage, Event, Config},
+        /* snip */
+
+    }
+);
+```
+
 ## Call
 
 ### `addControllers`

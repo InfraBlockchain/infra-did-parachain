@@ -14,6 +14,47 @@ to the cryptographic details and treat the values as bytes with some size bounds
   last update, etc), which is sufficient to verify the witness or the proof of knowledge.
 - To update the witness, the updates and witness update info should be parsed from the blocks and the accumulator module provides the functions get the updates and necessary events from the block
 
+## Runtime
+
+```rust
+parameter_types! {
+    // 128 bytes, for large labels, hash of a label can be used
+    pub const LabelMaxSize: u32 = 128;
+    pub const LabelPerByteWeight: Weight = Weight::from_ref_time(10);
+    // 16KB
+    pub const PublicKeyMaxSize: u32 = 256;
+    pub const PublicKeyPerByteWeight: Weight = Weight::from_ref_time(10);
+    pub const AccumulatorParamsMaxSize: u32 = 512;
+    pub const AccumulatorParamsPerByteWeight: Weight = Weight::from_ref_time(10);
+    pub const AccumulatedMaxSize: u32 = 128;
+    pub const AccumulatedPerByteWeight: Weight = Weight::from_ref_time(10);
+}
+
+impl accumulator::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type LabelMaxSize = LabelMaxSize;
+    type LabelPerByteWeight = LabelPerByteWeight;
+    type ParamsMaxSize = AccumulatorParamsMaxSize;
+    type ParamsPerByteWeight = AccumulatorParamsPerByteWeight;
+    type PublicKeyMaxSize = PublicKeyMaxSize;
+    type PublicKeyPerByteWeight = PublicKeyPerByteWeight;
+    type AccumulatedMaxSize = AccumulatedMaxSize;
+    type AccumulatedPerByteWeight = AccumulatedPerByteWeight;
+}
+
+construct_runtime!(
+    pub enum Runtime where
+        Block = Block,
+        NodeBlock = opaque::Block,
+        UncheckedExtrinsic = UncheckedExtrinsic,
+    {
+      /* snip */
+      Accumulator: accumulator::{Pallet, Call, Storage, Event},
+      /* snip */
+    }
+);
+```
+
 ## Call
 
 ### `addAccumulator`
@@ -64,7 +105,11 @@ Update an existing accumulator. The update contains the new accumulated value, t
 
 ### `AccumulatorOwnerCounters`
 
+---
+
 ### `AccumulatorParams`
+
+---
 
 ### `AccumulatorKeys`
 

@@ -137,7 +137,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("infradid"),
     impl_name: create_runtime_str!("infradid"),
     authoring_version: 2,
-    spec_version: 4020,
+    spec_version: 4021,
     impl_version: 1,
     apis: RUNTIME_API_VERSIONS,
     transaction_version: 5,

@@ -1,5 +1,26 @@
 # master
 
+## Runtime
+
+```rust
+impl master::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type RuntimeCall = RuntimeCall;
+}
+
+construct_runtime!(
+    pub enum Runtime where
+        Block = Block,
+        NodeBlock = opaque::Block,
+        UncheckedExtrinsic = UncheckedExtrinsic,
+    {
+        /* snip */
+        Master: master::{Pallet, Call, Storage, Event<T>, Config},
+        /* snip */
+    }
+);
+```
+
 ## Call
 
 ### `execute(proposal, auth)`

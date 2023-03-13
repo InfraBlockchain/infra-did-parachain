@@ -6,6 +6,43 @@
 - The public keys can either refer the signature params or not pass the reference while creating.
 - The params and public keys are owned by a DID and can be only removed by that DID.
 
+## Runtime
+
+```rust
+parameter_types! {
+    // 128 bytes, for large labels, hash of a label can be used
+    pub const LabelMaxSize: u32 = 128;
+    pub const LabelPerByteWeight: Weight = Weight::from_ref_time(10);
+    // 16KB
+    pub const ParamsMaxSize: u32 = 65536;
+    pub const ParamsPerByteWeight: Weight = Weight::from_ref_time(10);
+    pub const PublicKeyMaxSize: u32 = 256;
+    pub const PublicKeyPerByteWeight: Weight = Weight::from_ref_time(10);
+}
+
+impl bbs_plus::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type LabelMaxSize = LabelMaxSize;
+    type LabelPerByteWeight = LabelPerByteWeight;
+    type ParamsMaxSize = ParamsMaxSize;
+    type ParamsPerByteWeight = ParamsPerByteWeight;
+    type PublicKeyMaxSize = PublicKeyMaxSize;
+    type PublicKeyPerByteWeight = PublicKeyPerByteWeight;
+}
+
+construct_runtime!(
+    pub enum Runtime where
+        Block = Block,
+        NodeBlock = opaque::Block,
+        UncheckedExtrinsic = UncheckedExtrinsic,
+    {
+        /* snip */
+        BbsPlus: bbs_plus::{Pallet, Call, Storage, Event},
+        /* snip */
+    }
+);
+```
+
 ## Call
 
 ### `addParams`

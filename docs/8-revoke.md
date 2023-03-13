@@ -11,6 +11,31 @@ each time a credential is revoked or unrevoked.
 For now, only one policy is supported which is that each registry is owned by a single DID. Also, neither the policy
 nor the "add-only" flag can be updated post the creation of the registry for now.
 
+## Runtime
+
+```rust
+parameter_types! {
+    pub const MaxControllers: u32 = 15;
+}
+
+impl revoke::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type MaxControllers = MaxControllers;
+}
+
+construct_runtime!(
+    pub enum Runtime where
+        Block = Block,
+        NodeBlock = opaque::Block,
+        UncheckedExtrinsic = UncheckedExtrinsic,
+    {
+        /* snip */
+        Revoke: revoke::{Pallet, Call, Storage, Event},
+        /* snip */
+    }
+);
+```
+
 ## Call
 
 ### `newRegistry(add_registry)`

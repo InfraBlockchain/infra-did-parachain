@@ -1,4 +1,30 @@
-# revoke
+# trusted_entity
+
+## Runtime
+
+```rust
+parameter_types! {
+    pub const MaxControllers: u32 = 15;
+}
+
+impl trusted_entity::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type MaxControllers = MaxControllers;
+}
+
+// Create the runtime by composing the FRAME pallets that were previously configured.
+construct_runtime!(
+    pub enum Runtime where
+        Block = Block,
+        NodeBlock = opaque::Block,
+        UncheckedExtrinsic = UncheckedExtrinsic,
+    {
+        /* snip */
+        TrustedEntity: trusted_entity::{Pallet, Call, Storage, Event},
+        /* snip */
+    }
+);
+```
 
 ## Call
 

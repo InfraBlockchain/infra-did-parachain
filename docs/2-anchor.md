@@ -6,6 +6,26 @@ Anchors are hashed once before being added to storage. To check whether an ancho
 
 ---
 
+## Runtime
+
+```rust
+impl anchor::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+}
+
+construct_runtime!(
+    pub enum Runtime where
+        Block = Block,
+        NodeBlock = opaque::Block,
+        UncheckedExtrinsic = UncheckedExtrinsic,
+    {
+        /* snip */
+        Anchor: anchor::{Pallet, Call, Storage, Event<T>},
+        /* snip */
+    }
+);
+```
+
 ## Call
 
 ### `deploy`

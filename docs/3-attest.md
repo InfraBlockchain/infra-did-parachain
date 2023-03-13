@@ -1,5 +1,30 @@
 # attest
 
+## Runtime
+
+```rust
+parameter_types! {
+    // 8KB
+    pub const StorageWeight: Weight = Weight::from_ref_time(1100);
+}
+
+impl attest::Config for Runtime {
+    type StorageWeight = StorageWeight;
+}
+
+construct_runtime!(
+    pub enum Runtime where
+        Block = Block,
+        NodeBlock = opaque::Block,
+        UncheckedExtrinsic = UncheckedExtrinsic,
+    {
+        /* snip */
+        Attest: attest::{Pallet, Call, Storage},
+        /* snip */
+    }
+);
+```
+
 ## Call
 
 ### `setClaim`
