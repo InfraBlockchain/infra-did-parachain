@@ -80,7 +80,7 @@ decl_storage! {
         // The priority value provides replay protection and also gives attestations a partial
         // ordering. Signatures with lesser or equal priority to those previously posted by the same
         // entity are not accepted by the chain.
-        //
+
         // Notice that priority is not a block-number. This is intentional as it yields some desired
         // properties and allows some potential use-cases:
         //   - When publishing consecutive attestations, the attester need not care at which block a
@@ -92,10 +92,10 @@ decl_storage! {
         //     attestation may be selected by assigning it the highest priority in the batch.
         //     The "final" attestation will be acceptable by the runtime regardless of whether its
         //     predecessors were submitted.
-        //
+
         // An attestation on chain with iri set to None is semantically meaningless. Setting the
         // iri to None is equivalent to attesting to the empty claimgraph.
-        //
+
         // When Attestations::get(did).iri == Some(dat) and dat is a valid utf-8 Iri:
         // `[did dock:attestsDocumentContents dat]`.
         Attestations get (fn attestation): map hasher(blake2_128_concat) Attester => Attestation;
