@@ -1,0 +1,23 @@
+[relaychain]
+default_command = "../polkadot/target/release/polkadot"
+chain = "rococo-local"
+
+  [[relaychain.nodes]]
+  name = "alice"
+  validator = true
+
+  [[relaychain.nodes]]
+  name = "bob"
+  validator = true
+
+[[parachains]]
+id = 1337
+chain = "local"
+cumulus_based = true
+
+	# run alice as parachain collator
+	[[parachains.collators]]
+	name = "alice"
+	validator = true
+	command = "./target/release/infradid"
+	args = ["-lparachain=debug", "--alice"]

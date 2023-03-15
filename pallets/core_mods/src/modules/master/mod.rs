@@ -4,49 +4,6 @@
 //! `decl_module!` macro. Let's call that enum `module::Call`. Each `module::Call` is a reified
 //! invocation of one of the modules methods. The `module::Call` for this:
 //!
-//! ```
-//! # mod a {
-//! # use frame_support::{decl_module, DispatchResult};
-//! # type Foo = ();
-//! # type Bar = ();
-//! # trait Config: frame_system::Config {}
-//! decl_module! {
-//!     pub struct Module<T: Config> for enum Call where origin: T::RuntimeOrigin {
-//!         #[weight = 100_000]
-//!         pub fn frob(origin, foo: Foo) -> DispatchResult { Ok(()) }
-//!         #[weight = 100_000]
-//!         pub fn unfrob(origin, foo: Foo, bar: Bar) -> DispatchResult { Ok(()) }
-//!     }
-//! }
-//! # }
-//! ```
-//!
-//! looks something like this:
-//!
-//! ```
-//! # type Foo = ();
-//! # type Bar = ();
-//! enum Call {
-//!     frob(Foo),
-//!     unfrob(Foo, Bar),
-//! }
-//! ```
-//!
-//! The `construct_runtime!` macro assembles the calls from all the included modules into a
-//! single "super call". The name of this enum is also "Call", but let's refer to it as
-//! `runtime::Call`. A `runtime::Call` looks something like this:
-//!
-//! ```
-//! # mod module1 { pub type Call = (); }
-//! # mod module2 { pub type Call = (); }
-//! # mod module3 { pub type Call = (); }
-//! enum Call {
-//!    Module1(module1::Call),
-//!    Module2(module2::Call),
-//!    Module3(module3::Call),
-//! }
-//! ```
-//!
 //! This module allows members of the group called Master to "vote" on a `runtime::Call` (a
 //! proposal) using cryptographic signatures. The votes, along with the proposed `runtime::Call`
 //! are submitted in a single transaction. If enough valid votes endorse the proposal, the proposal

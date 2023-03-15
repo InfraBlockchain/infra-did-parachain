@@ -1,7 +1,3 @@
-//! Command Line Interfaces
-
-use crate::chain_specs;
-use clap::Parser;
 use std::path::PathBuf;
 
 /// Sub-commands supported by the collator.
@@ -36,33 +32,29 @@ pub enum Subcommand {
 
     /// Sub-commands concerned with benchmarking.
     /// The pallet benchmarking moved to the `pallet` sub-command.
-    #[clap(subcommand)]
+    #[command(subcommand)]
     Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 
-    /// Try some command against runtime state.
+    /// Try some testing command against a specified runtime state.
     #[cfg(feature = "try-runtime")]
     TryRuntime(try_runtime_cli::TryRuntimeCmd),
 
-    /// Try some command against runtime state. Note: `try-runtime` feature must
-    /// be enabled.
+    /// Errors since the binary was not build with `--features try-runtime`.
     #[cfg(not(feature = "try-runtime"))]
     TryRuntime,
 }
 
-/// Node CLI
-#[derive(Debug, Parser)]
-#[clap(
+#[derive(Debug, clap::Parser)]
+#[command(
     propagate_version = true,
     args_conflicts_with_subcommands = true,
     subcommand_negates_reqs = true
 )]
 pub struct Cli {
-    /// Subcommand
-    #[clap(subcommand)]
+    #[command(subcommand)]
     pub subcommand: Option<Subcommand>,
 
-    /// Cumulus Client Running CLI
-    #[clap(flatten)]
+    #[command(flatten)]
     pub run: cumulus_client_cli::RunCmd,
 
     /// Disable automatic hardware benchmarks.
@@ -72,15 +64,14 @@ pub struct Cli {
     ///
     /// The results are then printed out in the logs, and also sent as part of
     /// telemetry, if telemetry is enabled.
-    #[clap(long)]
+    #[arg(long)]
     pub no_hardware_benchmarks: bool,
 
     /// Relay chain arguments
-    #[clap(raw = true)]
-    pub relaychain_args: Vec<String>,
+    #[arg(raw = true)]
+    pub relay_chain_args: Vec<String>,
 }
 
-/// Relay Chain CLI
 #[derive(Debug)]
 pub struct RelayChainCli {
     /// The actual relay chain cli object.
@@ -99,7 +90,7 @@ impl RelayChainCli {
         para_config: &sc_service::Configuration,
         relay_chain_args: impl Iterator<Item = &'a String>,
     ) -> Self {
-        let extension = chain_specs::Extensions::try_get(&*para_config.chain_spec);
+        let extension = crate::chain_spec::Extensions::try_get(&*para_config.chain_spec);
         let chain_id = extension.map(|e| e.relay_chain.clone());
         let base_path = para_config
             .base_path
@@ -108,7 +99,7 @@ impl RelayChainCli {
         Self {
             base_path,
             chain_id,
-            base: polkadot_cli::RunCmd::parse_from(relay_chain_args),
+            base: clap::Parser::parse_from(relay_chain_args),
         }
     }
 }

@@ -1,20 +1,15 @@
 [workspace]
 members = [
-  "node",
-  "pallets/*",
-  "primitives/*",
-  "runtime/*",
+	"node",
+	"pallets/*",
+	"runtime",
 ]
-resolver = "2"
-
-[profile.production]
-codegen-units = 1
-inherits = "release"
-lto = true
-strip = "symbols"
 
 [profile.release]
 panic = "unwind"
+opt-level = 3
 
-[profile.test]
-debug = true
+[profile.production]
+inherits = "release"
+lto = true
+codegen-units = 1
