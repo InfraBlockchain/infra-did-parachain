@@ -6,7 +6,7 @@
 
 use alloc::vec::Vec;
 use frame_support::{decl_error, decl_event, decl_module, decl_storage, ensure, pallet_prelude::*};
-use frame_system::{self as system, ensure_signed, pallet_prelude::*};
+use frame_system::{self as system, ensure_signed};
 use sp_runtime::traits::Hash;
 use sp_std::prelude::*;
 use weights::*;

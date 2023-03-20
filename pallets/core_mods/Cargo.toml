@@ -49,44 +49,37 @@ version = "3.1.5"
 
 [dependencies.sp-core]
 default-features = false
-#version = "3.0.0"
 git = "https://github.com/paritytech/substrate.git"
 branch = "polkadot-v0.9.37"
 features = ["full_crypto"]
 
 [dependencies.sp-std]
 default-features = false
-#version = "3.0.0"
 git = "https://github.com/paritytech/substrate.git"
 branch = "polkadot-v0.9.37"
 
 [dependencies.sp-runtime]
 default-features = false
-#version = "3.0.0"
 git = "https://github.com/paritytech/substrate.git"
 branch = "polkadot-v0.9.37"
 
 [dependencies.sp-io]
 default-features = false
-#version = "3.0.0"
 git = "https://github.com/paritytech/substrate.git"
 branch = "polkadot-v0.9.37"
 
 [dependencies.frame-system]
 default-features = false
-#version = "3.0.0"
 git = "https://github.com/paritytech/substrate.git"
 branch = "polkadot-v0.9.37"
 
 [dependencies.frame-support]
 default-features = false
-#version = "3.0.0"
 git = "https://github.com/paritytech/substrate.git"
 branch = "polkadot-v0.9.37"
 
 [dependencies.sp-api]
 default-features = false
-#version = "3.0.0"
 git = "https://github.com/paritytech/substrate.git"
 branch = "polkadot-v0.9.37"
 
@@ -96,7 +89,6 @@ optional = true
 
 [dependencies.sp-application-crypto]
 default-features = false
-#version = "3.0.0"
 git = "https://github.com/paritytech/substrate.git"
 branch = "polkadot-v0.9.37"
 features = ["full_crypto"]
@@ -107,11 +99,6 @@ default-features = false
 #version = "3.0.0"
 git = "https://github.com/paritytech/substrate.git"
 branch = "polkadot-v0.9.37"
-
-[dependencies.libsecp256k1]
-version = "0.7"
-default-features = false
-features = ["static-context", "hmac"]
 
 [dependencies.sha2]
 version = "0.9"
@@ -178,7 +165,6 @@ std = [
     "sp-std/std",
     "frame-system/std",
     "sp-api/std",
-    "libsecp256k1/std",
     "scale-info/std",
 ]
 

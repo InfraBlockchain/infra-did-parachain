@@ -1,11 +1,7 @@
 .PHONY: build
 build:
-	cargo b --release
+	cargo build --release
 
-.PHONY: update
-update:
-	cargo update
-
-.PHONY: dev
-dev:
-	cargo run -- --chain=infradid-localdev --alice --tmp
+.PHONY: format
+format:
+	cargo +nightly fmt

@@ -1,8 +1,14 @@
-//! Parachain CLI
+//! Substrate Parachain Node Template CLI
 
-use infradid::command::{run, Result};
+#![warn(missing_docs)]
 
-#[inline]
-fn main() -> Result {
-    run()
+mod chain_spec;
+#[macro_use]
+mod service;
+mod cli;
+mod command;
+mod rpc;
+
+fn main() -> sc_cli::Result<()> {
+    command::run()
 }

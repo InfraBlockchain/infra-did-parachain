@@ -78,6 +78,8 @@ rustup update nightly
 rustup target add wasm32-unknown-unknown --toolchain nightly
 ```
 
+for more information, see the [docs](https://github.com/InfraBlockchain/infra-did-substrate/tree/develop/docs/0-rust-setup.md)
+
 and install other dependencies like profobuf, llvm:
 
 ```sh
@@ -97,16 +99,30 @@ cargo build --release
 
 ## 4. Run
 
-You can start local standalone development chain
+You can start local development chain
 
 ```sh
-./target/release/infradid --chain=infradid-localdev --alice --tmp
+./target/release/infradid --dev --alice --tmp
 ```
 
 or start local chain
 
 ```sh
-./target/release/infradid --chain=infradid-local --alice --tmp
+./target/release/infradid --chain=local --alice --tmp
 ```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
+
+## 5. Development
+
+You can start local development parachain with relay chain using [zombienet](https://github.com/paritytech/zombienet)
+
+```sh
+zombienet spawn --provider native zombienet/local-dev.toml
+```
+
+And apply rust formatter
+
+```sh
+cargo +nightly fmt
+```

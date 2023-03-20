@@ -1,89 +1,38 @@
-//! Chain-Specific Command Line Interfaces
+use std::net::SocketAddr;
 
-use crate::{
-    chain_specs,
-    cli::{Cli, RelayChainCli, Subcommand},
-    rpc,
-    service::{new_partial, InfraDIDRuntimeExecutor},
-};
 use codec::Encode;
-use common_primitives::types::Header;
 use cumulus_client_cli::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
-use log::info;
+use infra_did_runtime::Block;
+use log::{info, warn};
 use sc_cli::{
     ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
-    NetworkParams, RuntimeVersion, SharedParams, SubstrateCli,
+    NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
 use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::{
-    generic,
-    traits::{AccountIdConversion, Block as BlockT},
-    OpaqueExtrinsic,
+use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
+
+use crate::{
+    chain_spec,
+    cli::{Cli, RelayChainCli, Subcommand},
+    service::{new_partial, ParachainNativeExecutor},
 };
-use std::net::SocketAddr;
 
-pub use sc_cli::Error;
-
-/// Result Type Alias with default [`Error`] Type
-pub type Result<T = (), E = Error> = core::result::Result<T, E>;
-
-/// Block Type
-pub type Block = generic::Block<Header, OpaqueExtrinsic>;
-
-/// Parachain ID
-pub const INFRADID_PARACHAIN_ID: u32 = 1337;
-
-trait IdentifyChain {
-    fn is_infradid(&self) -> bool;
-    fn is_localdev(&self) -> bool;
-}
-
-impl IdentifyChain for dyn sc_service::ChainSpec {
-    fn is_infradid(&self) -> bool {
-        self.id().starts_with("infradid")
-    }
-    fn is_localdev(&self) -> bool {
-        self.id().ends_with("localdev")
-    }
-}
-
-impl<T: sc_service::ChainSpec + 'static> IdentifyChain for T {
-    fn is_infradid(&self) -> bool {
-        <dyn sc_service::ChainSpec>::is_infradid(self)
-    }
-    fn is_localdev(&self) -> bool {
-        <dyn sc_service::ChainSpec>::is_localdev(self)
-    }
-}
-
-fn load_spec(id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
-    match id {
-        // infradid chainspec
-        "infradid-dev" => Ok(Box::new(chain_specs::infradid_development_config())),
-        "infradid-local" => Ok(Box::new(chain_specs::infradid_local_config(false))),
-        "infradid-localdev" => Ok(Box::new(chain_specs::infradid_local_config(true))),
-        // "infradid-testnet" => Ok(Box::new(chain_specs::infradid_testnet_config()?)),
-        // "infradid-2085" => Ok(Box::new(chain_specs::infradid_2085_config()?)),
-        // "infradid-v3-staging" => Ok(Box::new(chain_specs::infradid_v3_2085_staging_config()?)),
-        path => {
-            let chain_spec = chain_specs::ChainSpec::from_json_file(path.into())?;
-            if chain_spec.is_infradid() {
-                Ok(Box::new(chain_specs::InfraDIDChainSpec::from_json_file(
-                    path.into(),
-                )?))
-            } else {
-                Err("Please input a vaild file name.".into())
-            }
-        }
-    }
+fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
+    Ok(match id {
+        "dev" => Box::new(chain_spec::development_config()),
+        "" | "local" => Box::new(chain_spec::local_testnet_config()),
+        path => Box::new(chain_spec::ChainSpec::from_json_file(
+            std::path::PathBuf::from(path),
+        )?),
+    })
 }
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
-        "Parachain Collator".into()
+        "Infra DID Collator Node".into()
     }
 
     fn impl_version() -> String {
@@ -92,10 +41,10 @@ impl SubstrateCli for Cli {
 
     fn description() -> String {
         format!(
-            "Parachain Collator\n\nThe command-line arguments provided first will be \
+            "Infra DID Parachain Collator Node\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
-		to the relaychain node.\n\n\
-		{} [parachain-args] -- [relaychain-args]",
+		to the relay chain node.\n\n\
+		{} <parachain-args> -- <relay-chain-args>",
             Self::executable_name()
         )
     }
@@ -105,29 +54,25 @@ impl SubstrateCli for Cli {
     }
 
     fn support_url() -> String {
-        "https://github.com/sweatpotato13/substrate-parachain-boilerplate/issues/new".into()
+        "https://github.com/InfraBlockchain/infra-did-substrate".into()
     }
 
     fn copyright_start_year() -> i32 {
-        2023
+        2020
     }
 
-    fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
+    fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
         load_spec(id)
     }
 
-    fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-        if chain_spec.is_infradid() {
-            &infra_did_runtime::VERSION
-        } else {
-            panic!("invalid chain spec!")
-        }
+    fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+        &infra_did_runtime::VERSION
     }
 }
 
 impl SubstrateCli for RelayChainCli {
     fn impl_name() -> String {
-        "Infra-DID Parachain Collator".into()
+        "Infra DID Collator Node".into()
     }
 
     fn impl_version() -> String {
@@ -136,10 +81,10 @@ impl SubstrateCli for RelayChainCli {
 
     fn description() -> String {
         format!(
-            "Infra-DID Parachain collator\n\nThe command-line arguments provided first will be \
+            "Infra DID Parachain Collator Node\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
-		to the relaychain node.\n\n\
-		{} [parachain-args] -- [relaychain-args]",
+		to the relay chain node.\n\n\
+		{} <parachain-args> -- <relay-chain-args>",
             Self::executable_name()
         )
     }
@@ -149,14 +94,14 @@ impl SubstrateCli for RelayChainCli {
     }
 
     fn support_url() -> String {
-        "https://github.com/sweatpotato13/substrate-parachain-boilerplate/issues/new".into()
+        "https://github.com/InfraBlockchain/infra-did-substrate".into()
     }
 
     fn copyright_start_year() -> i32 {
-        2023
+        2020
     }
 
-    fn load_spec(&self, id: &str) -> Result<Box<dyn sc_service::ChainSpec>, String> {
+    fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
         polkadot_cli::Cli::from_iter([RelayChainCli::executable_name()].iter()).load_spec(id)
     }
 
@@ -165,37 +110,21 @@ impl SubstrateCli for RelayChainCli {
     }
 }
 
-/// Creates partial components for the runtimes that are supported by the benchmarks.
-macro_rules! construct_benchmark_partials {
-    ($config:expr, |$partials:ident| $code:expr) => {
-        if $config.chain_spec.is_infradid() {
-            let $partials = new_partial::<infra_did_runtime::RuntimeApi>(&$config)?;
-            $code
-        } else {
-            Err("The chain is not supported".into())
-        }
-    };
-}
-
 macro_rules! construct_async_run {
-    (|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
-        let runner = $cli.create_runner($cmd)?;
-            if runner.config().chain_spec.is_infradid() {
-                runner.async_run(|$config| {
-                    let $components = new_partial::<infra_did_runtime::RuntimeApi>(
-                        &$config,
-                    )?;
-                    let task_manager = $components.task_manager;
-                    { $( $code )* }.map(|v| (v, task_manager))
-                })
-            } else {
-                panic!("wrong chain spec");
-            }
-    }}
+	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
+		let runner = $cli.create_runner($cmd)?;
+		runner.async_run(|$config| {
+			let $components = new_partial(&$config)?;
+			let task_manager = $components.task_manager;
+			{ $( $code )* }.map(|v| (v, task_manager))
+		})
+	}}
 }
 
 /// Parse command line arguments into service configuration.
-pub fn run_with(cli: Cli) -> Result {
+pub fn run() -> Result<()> {
+    let cli = Cli::from_args();
+
     match &cli.subcommand {
         Some(Subcommand::BuildSpec(cmd)) => {
             let runner = cli.create_runner(cmd)?;
@@ -234,7 +163,7 @@ pub fn run_with(cli: Cli) -> Result {
                     &config,
                     [RelayChainCli::executable_name()]
                         .iter()
-                        .chain(cli.relaychain_args.iter()),
+                        .chain(cli.relay_chain_args.iter()),
                 );
 
                 let polkadot_config = SubstrateCli::create_configuration(
@@ -242,7 +171,7 @@ pub fn run_with(cli: Cli) -> Result {
                     &polkadot_cli,
                     config.tokio_handle.clone(),
                 )
-                .map_err(|err| format!("Relay chain argument error: {err}"))?;
+                .map_err(|err| format!("Relay chain argument error: {}", err))?;
 
                 cmd.run(config, polkadot_config)
             })
@@ -264,52 +193,57 @@ pub fn run_with(cli: Cli) -> Result {
         }
         Some(Subcommand::Benchmark(cmd)) => {
             let runner = cli.create_runner(cmd)?;
-
-            // Switch on the concrete benchmark sub-command
+            // Switch on the concrete benchmark sub-command-
             match cmd {
                 BenchmarkCmd::Pallet(cmd) => {
                     if cfg!(feature = "runtime-benchmarks") {
-                        runner.sync_run(|config| {
-                            if config.chain_spec.is_infradid() {
-                                cmd.run::<Block, InfraDIDRuntimeExecutor>(config)
-                            } else {
-                                Err("Chain doesn't support benchmarking".into())
-                            }
-                        })
+                        runner.sync_run(|config| cmd.run::<Block, ParachainNativeExecutor>(config))
                     } else {
                         Err("Benchmarking wasn't enabled when building the node. \
-				You can enable it with `--features runtime-benchmarks`."
+					You can enable it with `--features runtime-benchmarks`."
                             .into())
                     }
                 }
                 BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
-                    construct_benchmark_partials!(config, |partials| cmd.run(partials.client))
+                    let partials = new_partial(&config)?;
+                    cmd.run(partials.client)
                 }),
                 #[cfg(not(feature = "runtime-benchmarks"))]
-                BenchmarkCmd::Storage(_) => Err(
-                    "Storage benchmarking can be enabled with `--features runtime-benchmarks`."
-                        .into(),
-                ),
+                BenchmarkCmd::Storage(_) => {
+                    return Err(sc_cli::Error::Input(
+                        "Compile with --features=runtime-benchmarks \
+						to enable storage benchmarks."
+                            .into(),
+                    )
+                    .into())
+                }
                 #[cfg(feature = "runtime-benchmarks")]
                 BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
-                    construct_benchmark_partials!(config, |partials| {
-                        let db = partials.backend.expose_db();
-                        let storage = partials.backend.expose_storage();
-
-                        cmd.run(config, partials.client.clone(), db, storage)
-                    })
+                    let partials = new_partial(&config)?;
+                    let db = partials.backend.expose_db();
+                    let storage = partials.backend.expose_storage();
+                    cmd.run(config, partials.client.clone(), db, storage)
                 }),
-                BenchmarkCmd::Extrinsic(_) => Err("Unsupported benchmarking command".into()),
-                BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
                 BenchmarkCmd::Machine(cmd) => {
                     runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()))
                 }
+                // NOTE: this allows the Client to leniently implement
+                // new benchmark commands without requiring a companion MR.
+                #[allow(unreachable_patterns)]
+                _ => Err("Benchmarking sub-command unsupported".into()),
             }
         }
         #[cfg(feature = "try-runtime")]
         Some(Subcommand::TryRuntime(cmd)) => {
-            // grab the task manager.
             let runner = cli.create_runner(cmd)?;
+
+            use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
+            type HostFunctionsOf<E> = ExtendedHostFunctions<
+                sp_io::SubstrateHostFunctions,
+                <E as NativeExecutionDispatch>::ExtendHostFunctions,
+            >;
+
+            // grab the task manager.
             let registry = &runner
                 .config()
                 .prometheus_config
@@ -317,117 +251,79 @@ pub fn run_with(cli: Cli) -> Result {
                 .map(|cfg| &cfg.registry);
             let task_manager =
                 sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
-                    .map_err(|e| format!("Error: {e:?}"))?;
+                    .map_err(|e| format!("Error: {:?}", e))?;
 
-            if runner.config().chain_spec.is_infradid() {
-                runner.async_run(|config| {
-                    Ok((
-                        cmd.run::<Block, InfraDIDRuntimeExecutor>(config),
-                        task_manager,
-                    ))
-                })
-            } else {
-                Err("Chain doesn't support try-runtime".into())
-            }
+            runner.async_run(|_| {
+                Ok((
+                    cmd.run::<Block, HostFunctionsOf<ParachainNativeExecutor>>(),
+                    task_manager,
+                ))
+            })
         }
         #[cfg(not(feature = "try-runtime"))]
-        Some(Subcommand::TryRuntime) => Err("Try-runtime wasn't enabled when building the node. \
-		You can enable it with `--features try-runtime`."
+        Some(Subcommand::TryRuntime) => Err("Try-runtime was not enabled when building the node. \
+			You can enable it with `--features try-runtime`."
             .into()),
         None => {
             let runner = cli.create_runner(&cli.run.normalize())?;
-            let chain_spec = &runner.config().chain_spec;
-            let is_dev = chain_spec.is_localdev();
-            info!("id:{}", chain_spec.id());
             let collator_options = cli.run.collator_options();
 
             runner.run_node_until_exit(|config| async move {
-                if is_dev {
-                    info!("⚠️  DEV STANDALONE MODE.");
-                    if config.chain_spec.is_infradid() {
-                        return crate::service::start_dev_nimbus_node::<infra_did_runtime::RuntimeApi, _>(
-                            config,
-                            rpc::create_infradid_full,
-                        ).await
-                            .map_err(Into::into);
-                    } else {
-                        return Err("Dev mode not support for current chain".into());
-                    }
-                }
+				let hwbench = if !cli.no_hardware_benchmarks {
+					config.database.path().map(|database_path| {
+						let _ = std::fs::create_dir_all(&database_path);
+						sc_sysinfo::gather_hwbench(Some(database_path))
+					})
+				} else {
+					None
+				};
 
-                let hwbench = if !cli.no_hardware_benchmarks {
-                    config.database.path().map(|database_path| {
-                        let _ = std::fs::create_dir_all(database_path);
-                        sc_sysinfo::gather_hwbench(Some(database_path))
-                    })
-                } else {
-                    None
-                };
+				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
+					.map(|e| e.para_id)
+					.ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
 
-                let para_id = crate::chain_specs::Extensions::try_get(&*config.chain_spec)
-                    .map(|e| e.para_id)
-                    .ok_or("Could not find parachain extension in chain-spec.")?;
+				let polkadot_cli = RelayChainCli::new(
+					&config,
+					[RelayChainCli::executable_name()].iter().chain(cli.relay_chain_args.iter()),
+				);
 
-                let polkadot_cli = RelayChainCli::new(
-                    &config,
-                    [RelayChainCli::executable_name()]
-                        .iter()
-                        .chain(cli.relaychain_args.iter()),
-                );
+				let id = ParaId::from(para_id);
 
-                let id = ParaId::from(para_id);
+				let parachain_account =
+					AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account_truncating(&id);
 
-                let parachain_account =
-                    AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account_truncating(&id);
+				let state_version = Cli::native_runtime_version(&config.chain_spec).state_version();
+				let block: Block = generate_genesis_block(&*config.chain_spec, state_version)
+					.map_err(|e| format!("{:?}", e))?;
+				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
 
-                let state_version =
-                    RelayChainCli::native_runtime_version(&config.chain_spec).state_version();
+				let tokio_handle = config.tokio_handle.clone();
+				let polkadot_config =
+					SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, tokio_handle)
+						.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
-                let block: crate::service::Block =
-                    generate_genesis_block(&*config.chain_spec, state_version)
-                        .map_err(|e| format!("{e:?}"))?;
-                let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
+				info!("Parachain id: {:?}", id);
+				info!("Parachain Account: {}", parachain_account);
+				info!("Parachain genesis state: {}", genesis_state);
+				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-                let tokio_handle = config.tokio_handle.clone();
-                let polkadot_config =
-                    SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, tokio_handle)
-                        .map_err(|err| format!("Relay chain argument error: {err}"))?;
+				if !collator_options.relay_chain_rpc_urls.is_empty() && cli.relay_chain_args.len() > 0 {
+					warn!("Detected relay chain node arguments together with --relay-chain-rpc-url. This command starts a minimal Polkadot node that only uses a network-related subset of all relay chain CLI options.");
+				}
 
-                info!("Parachain id: {:?}", id);
-                info!("Parachain Account: {}", parachain_account);
-                info!("Parachain genesis state: {}", genesis_state);
-                info!(
-                    "Is collating: {}",
-                    if config.role.is_authority() {
-                        "yes"
-                    } else {
-                        "no"
-                    }
-                );
-
-                if config.chain_spec.is_infradid() {
-                    crate::service::start_parachain_node::<infra_did_runtime::RuntimeApi, _>(
-                        config,
-                        polkadot_config,
-                        collator_options,
-                        id,
-                        hwbench,
-                        rpc::create_infradid_full,
-                    )
-                    .await
-                    .map(|r| r.0)
-                    .map_err(Into::into)
-                } else {
-                    Err("chain spec error".into())
-                }
-            })
+				crate::service::start_parachain_node(
+					config,
+					polkadot_config,
+					collator_options,
+					id,
+					hwbench,
+				)
+				.await
+				.map(|r| r.0)
+				.map_err(Into::into)
+			})
         }
     }
-}
-
-/// Parse command line arguments into service configuration.
-pub fn run() -> Result {
-    run_with(Cli::from_args())
 }
 
 impl DefaultConfigurationValues for RelayChainCli {
@@ -525,6 +421,10 @@ impl CliConfiguration<Self> for RelayChainCli {
         self.base.base.transaction_pool(is_dev)
     }
 
+    fn trie_cache_maximum_size(&self) -> Result<Option<usize>> {
+        self.base.base.trie_cache_maximum_size()
+    }
+
     fn rpc_methods(&self) -> Result<sc_service::config::RpcMethods> {
         self.base.base.rpc_methods()
     }
@@ -562,5 +462,9 @@ impl CliConfiguration<Self> for RelayChainCli {
         chain_spec: &Box<dyn ChainSpec>,
     ) -> Result<Option<sc_telemetry::TelemetryEndpoints>> {
         self.base.base.telemetry_endpoints(chain_spec)
+    }
+
+    fn node_name(&self) -> Result<String> {
+        self.base.base.node_name()
     }
 }
