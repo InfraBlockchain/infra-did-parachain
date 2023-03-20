@@ -1,7 +1,7 @@
 FROM ubuntu:jammy AS builder
 
 # The node will be built in this directory
-WORKDIR /parachain-template-node
+WORKDIR /infra-did-substrate
 
 RUN apt -y update && \
   apt install -y --no-install-recommends \
@@ -36,19 +36,19 @@ ARG release
 RUN if [ "$release" = "Y" ] ; then \
       echo 'Building in release mode.' ; \
       WASM_BUILD_TOOLCHAIN=nightly cargo build --profile=release $features ; \
-      mv /parachain-template-node/target/release/parachain-template-node /parachain-template-node/target/; \
+      mv /infra-did-substrate/target/release/infradid /infra-did-substrate/target/; \
     else \
       echo 'Building in production mode.' ; \
       WASM_BUILD_TOOLCHAIN=nightly cargo build --profile=production $features ; \
-      mv /parachain-template-node/target/production/parachain-template-node /parachain-template-node/target/; \
+      mv /infra-did-substrate/target/production/infradid /infra-did-substrate/target/; \
     fi
 
 # Final stage. Copy the node executable and the script
 FROM ubuntu:jammy
 
-WORKDIR /parachain-template-node
+WORKDIR /infra-did-substrate
 
-COPY --from=builder /parachain-template-node/target/parachain-template-node .
+COPY --from=builder /infra-did-substrate/target/infradid .
 
 # curl is required for uploading to keystore
 # note: `subkey insert` is a potential alternarve to curl
@@ -61,5 +61,5 @@ EXPOSE 30333 9933 9944
 
 ENV RUST_BACKTRACE 1
 
-ENTRYPOINT ["./parachain-template-node"]
+ENTRYPOINT ["./infradid"]
 CMD []
