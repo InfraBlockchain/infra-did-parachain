@@ -1,9 +1,12 @@
 use crate as dock;
 use crate::{
     did::{self, Did, DidSignature},
-    keys_and_sigs::{SigValue, ED25519_WEIGHT, SECP256K1_WEIGHT, SR25519_WEIGHT},
+    // keys_and_sigs::{SigValue, ED25519_WEIGHT, SECP256K1_WEIGHT, SR25519_WEIGHT},
+    keys_and_sigs::{SigValue, ED25519_WEIGHT, SR25519_WEIGHT},
     util::{NonceError, WithNonce},
-    Action, StorageVersion, ToStateChange,
+    Action,
+    StorageVersion,
+    ToStateChange,
 };
 use alloc::collections::BTreeSet;
 use codec::{Decode, Encode};
@@ -100,18 +103,18 @@ pub struct Authorizer {
 /// Return counts of different signature types in given `DidSigs` as 3-Tuple as (no. of Sr22519 sigs,
 /// no. of Ed25519 Sigs, no. of Secp256k1 sigs). Useful for weight calculation and thus the return
 /// type is in `Weight` but realistically, it should fit in a u8
-fn count_sig_types<T: frame_system::Config>(auth: &[DidSigs<T>]) -> (u64, u64, u64) {
+fn count_sig_types<T: frame_system::Config>(auth: &[DidSigs<T>]) -> (u64, u64) {
     let mut sr = 0;
     let mut ed = 0;
-    let mut secp = 0;
+    // let mut secp = 0;
     for a in auth.iter() {
         match a.sig.sig {
             SigValue::Sr25519(_) => sr += 1,
             SigValue::Ed25519(_) => ed += 1,
-            SigValue::Secp256k1(_) => secp += 1,
+            // SigValue::Secp256k1(_) => secp += 1,
         }
     }
-    (sr, ed, secp)
+    (sr, ed)
 }
 
 /// Computes weight of the given `DidSigs`. Considers the no. and types of signatures and no. of reads. Disregards
@@ -121,12 +124,12 @@ pub fn get_weight_for_did_sigs<T: frame_system::Config>(
     auth: &[DidSigs<T>],
     db_weights: RuntimeDbWeight,
 ) -> Weight {
-    let (sr, ed, secp) = count_sig_types(auth);
+    let (sr, ed) = count_sig_types(auth);
     db_weights
         .reads(auth.len() as u64)
         .saturating_add(SR25519_WEIGHT.saturating_mul(sr))
         .saturating_add(ED25519_WEIGHT.saturating_mul(ed))
-        .saturating_add(SECP256K1_WEIGHT.saturating_mul(secp))
+    // .saturating_add(SECP256K1_WEIGHT.saturating_mul(secp))
 }
 
 decl_event!(
@@ -338,7 +341,7 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         match sig.sig {
             SigValue::Sr25519(_) => Self::add_issuer_sr25519,
             SigValue::Ed25519(_) => Self::add_issuer_ed25519,
-            SigValue::Secp256k1(_) => Self::add_issuer_secp256k1,
+            // SigValue::Secp256k1(_) => Self::add_issuer_secp256k1,
         }
     }
 
@@ -346,7 +349,7 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         match sig.sig {
             SigValue::Sr25519(_) => Self::remove_issuer_sr25519,
             SigValue::Ed25519(_) => Self::remove_issuer_ed25519,
-            SigValue::Secp256k1(_) => Self::remove_issuer_secp256k1,
+            // SigValue::Secp256k1(_) => Self::remove_issuer_secp256k1,
         }
     }
 
@@ -354,7 +357,7 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         match sig.sig {
             SigValue::Sr25519(_) => Self::add_verifier_sr25519,
             SigValue::Ed25519(_) => Self::add_verifier_ed25519,
-            SigValue::Secp256k1(_) => Self::add_verifier_secp256k1,
+            // SigValue::Secp256k1(_) => Self::add_verifier_secp256k1,
         }
     }
 
@@ -362,7 +365,7 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         match sig.sig {
             SigValue::Sr25519(_) => Self::remove_verifier_sr25519,
             SigValue::Ed25519(_) => Self::remove_verifier_ed25519,
-            SigValue::Secp256k1(_) => Self::remove_verifier_secp256k1,
+            // SigValue::Secp256k1(_) => Self::remove_verifier_secp256k1,
         }
     }
 
@@ -370,7 +373,7 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         (match sig.sig {
             SigValue::Sr25519(_) => Self::remove_authorizer_sr25519,
             SigValue::Ed25519(_) => Self::remove_authorizer_ed25519,
-            SigValue::Secp256k1(_) => Self::remove_authorizer_secp256k1,
+            // SigValue::Secp256k1(_) => Self::remove_authorizer_secp256k1,
         }())
     }
 }
