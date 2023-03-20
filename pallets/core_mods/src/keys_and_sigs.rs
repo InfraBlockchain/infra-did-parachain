@@ -1,10 +1,8 @@
-use crate::util::{Bytes32, Bytes33, Bytes64, Bytes65};
+use crate::util::{Bytes32, Bytes64};
 use codec::{Decode, Encode};
 use frame_support::dispatch::Weight;
-use sha2::{Digest, Sha256};
 use sp_core::{ed25519, sr25519, Pair};
 use sp_runtime::traits::Verify;
-use sp_std::convert::TryInto;
 
 /// An abstraction for a public key. Abstracts the type and value of the public key where the value is a
 /// byte array

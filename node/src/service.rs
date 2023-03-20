@@ -100,7 +100,7 @@ pub fn new_partial(
         )?;
     let client = Arc::new(client);
 
-    let keystore = keystore_container.sync_keystore();
+    // let keystore = keystore_container.sync_keystore();
 
     let telemetry_worker_handle = telemetry.as_ref().map(|(worker, _)| worker.handle());
 

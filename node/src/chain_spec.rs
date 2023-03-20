@@ -2,10 +2,7 @@ use cumulus_primitives_core::ParaId;
 use infra_did_runtime::{
     did::{Did, DidKey},
     keys_and_sigs::PublicKey,
-    master::Membership,
-    AccountId, AuraConfig, AuraId, Balance, BalancesConfig, CouncilConfig, DIDModuleConfig,
-    DemocracyConfig, GenesisConfig, Hash, MasterConfig, Signature, SudoConfig, SystemConfig,
-    TechnicalCommitteeConfig, EXISTENTIAL_DEPOSIT, UNIT, WASM_BINARY,
+    AccountId, AuraId, DIDModuleConfig, Signature, EXISTENTIAL_DEPOSIT,
 };
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
@@ -119,17 +116,6 @@ pub fn development_config() -> ChainSpec {
                     get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
                 ],
                 INFRA_DID_PARACHAIN_ID.into(),
-                Membership {
-                    members: [
-                        b"Alice\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                        b"Bob\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                        b"Charlie\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                    ]
-                    .iter()
-                    .map(|d| Did(**d))
-                    .collect(),
-                    vote_requirement: 2,
-                },
                 [
                     (
                         b"Alice\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
@@ -202,17 +188,6 @@ pub fn local_testnet_config() -> ChainSpec {
                     get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
                 ],
                 INFRA_DID_PARACHAIN_ID.into(),
-                Membership {
-                    members: [
-                        b"Alice\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                        b"Bob\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                        b"Charlie\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                    ]
-                    .iter()
-                    .map(|d| Did(**d))
-                    .collect(),
-                    vote_requirement: 2,
-                },
                 [
                     (
                         b"Alice\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
@@ -254,7 +229,6 @@ fn testnet_genesis(
     invulnerables: Vec<(AccountId, AuraId)>,
     endowed_accounts: Vec<AccountId>,
     id: ParaId,
-    master: Membership,
     dids: Vec<(Did, DidKey)>,
 ) -> infra_did_runtime::GenesisConfig {
     infra_did_runtime::GenesisConfig {
@@ -288,29 +262,17 @@ fn testnet_genesis(
                 })
                 .collect(),
         },
-        democracy: infra_did_runtime::DemocracyConfig::default(),
-        council: infra_did_runtime::CouncilConfig {
-            members: vec![],
-            phantom: Default::default(),
-        },
-        technical_committee: infra_did_runtime::TechnicalCommitteeConfig {
-            members: vec![],
-            phantom: Default::default(),
-        },
         // no need to pass anything to aura, in fact it will panic if we do. Session will take care
         // of this.
         aura: Default::default(),
         aura_ext: Default::default(),
-        assets: Default::default(),
         parachain_system: Default::default(),
         polkadot_xcm: infra_did_runtime::PolkadotXcmConfig {
             safe_xcm_version: Some(SAFE_XCM_VERSION),
         },
-        treasury: Default::default(),
         sudo: infra_did_runtime::SudoConfig {
             key: Some(get_account_id_from_seed::<sr25519::Public>("Alice")),
         },
-        master: MasterConfig { members: master },
         did_module: DIDModuleConfig { dids },
     }
 }

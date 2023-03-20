@@ -26,12 +26,3 @@ pub use block_weights::constants::BlockExecutionWeight;
 pub use extrinsic_weights::constants::ExtrinsicBaseWeight;
 pub use paritydb_weights::constants::ParityDbWeight;
 pub use rocksdb_weights::constants::RocksDbWeight;
-
-pub mod pallet_bounties;
-pub mod pallet_child_bounties;
-pub mod pallet_collective_council;
-pub mod pallet_collective_technical_committee;
-pub mod pallet_democracy;
-pub mod pallet_preimage;
-pub mod pallet_scheduler;
-pub mod pallet_treasury;

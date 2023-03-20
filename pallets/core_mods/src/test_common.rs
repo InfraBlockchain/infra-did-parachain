@@ -3,7 +3,7 @@
 use crate::{
     accumulator, anchor, attest, bbs_plus, blob,
     did::{self, Did, DidKey, DidSignature},
-    keys_and_sigs, master, revoke, trusted_entity, util, StateChange, ToStateChange,
+    keys_and_sigs, revoke, trusted_entity, util, StateChange, ToStateChange,
 };
 
 use crate::{
@@ -42,7 +42,6 @@ frame_support::construct_runtime!(
         DIDModule: did::{Pallet, Call, Storage, Event, Config},
         RevoMod: revoke::{Pallet, Call, Storage, Event},
         BlobMod: blob::{Pallet, Call, Storage},
-        MasterMod: master::{Pallet, Call, Storage, Event<T>, Config},
         AnchorMod: anchor::{Pallet, Call, Storage, Event<T>},
         AttestMod: attest::{Pallet, Call, Storage},
         BBSPlusMod: bbs_plus::{Pallet, Call, Storage, Event},
@@ -55,7 +54,6 @@ frame_support::construct_runtime!(
 pub enum TestEvent {
     Did(crate::did::Event),
     Revoke(crate::revoke::Event),
-    Master(crate::master::Event<Test>),
     Anchor(crate::anchor::Event<Test>),
     Unknown,
     BBSPlus(bbs_plus::Event),
@@ -96,12 +94,6 @@ impl From<crate::revoke::Event> for TestEvent {
 impl From<crate::anchor::Event<Test>> for TestEvent {
     fn from(other: crate::anchor::Event<Test>) -> Self {
         Self::Anchor(other)
-    }
-}
-
-impl From<crate::master::Event<Test>> for TestEvent {
-    fn from(other: crate::master::Event<Test>) -> Self {
-        Self::Master(other)
     }
 }
 
@@ -232,11 +224,6 @@ impl crate::anchor::Config for Test {
 impl crate::blob::Config for Test {
     type MaxBlobSize = MaxBlobSize;
     type StorageWeight = StorageWeight;
-}
-
-impl crate::master::Config for Test {
-    type RuntimeEvent = TestEvent;
-    type RuntimeCall = RuntimeCall;
 }
 
 impl crate::attest::Config for Test {

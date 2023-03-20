@@ -25,7 +25,6 @@ def_state_change! {
         revoke::UnRevoke,
         revoke::RemoveRegistry,
         blob::AddBlob,
-        master::MasterVote,
         attest::SetAttestationClaim,
         bbs_plus::AddBBSPlusParams,
         bbs_plus::AddBBSPlusPublicKey,
@@ -98,9 +97,7 @@ pub mod runtime_api;
 pub mod types;
 pub mod util;
 
-pub use modules::{
-    accumulator, anchor, attest, bbs_plus, blob, did, master, revoke, trusted_entity,
-};
+pub use modules::{accumulator, anchor, attest, bbs_plus, blob, did, revoke, trusted_entity};
 
 #[cfg(test)]
 mod test_common;
