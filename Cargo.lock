@@ -1038,7 +1038,6 @@ dependencies = [
  "getrandom 0.2.8",
  "hex",
  "hex-literal",
- "libsecp256k1",
  "merlin 2.0.1",
  "pallet-balances",
  "pallet-timestamp",
