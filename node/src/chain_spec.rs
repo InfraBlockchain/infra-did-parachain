@@ -84,7 +84,7 @@ pub fn development_config() -> ChainSpec {
 
     ChainSpec::from_genesis(
         // Name
-        "Development",
+        "Infra DID Development",
         // ID
         "dev",
         ChainType::Development,
@@ -156,7 +156,7 @@ pub fn local_testnet_config() -> ChainSpec {
 
     ChainSpec::from_genesis(
         // Name
-        "Local Testnet",
+        "Infra DID Local Testnet",
         // ID
         "local_testnet",
         ChainType::Local,
