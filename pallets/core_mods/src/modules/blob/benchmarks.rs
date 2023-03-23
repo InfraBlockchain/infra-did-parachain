@@ -8,7 +8,7 @@ const MAX_BLOB: u32 = 100;
 
 crate::bench_with_all_pairs! {
     with_pairs:
-    new_sr25519 for sr25519, new_ed25519 for ed25519, new_secp256k1 for secp256k1 {
+    new_sr25519 for sr25519, new_ed25519 for ed25519 {
         {
             let s in 0 .. MAX_BLOB;
         }

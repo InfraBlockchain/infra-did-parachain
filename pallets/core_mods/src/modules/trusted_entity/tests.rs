@@ -217,9 +217,9 @@ mod errors {
     }
 
     #[test]
-    fn AuthorizerExists() {
+    fn authorizer_exists() {
         if !in_ext() {
-            return ext().execute_with(AuthorizerExists);
+            return ext().execute_with(authorizer_exists);
         }
 
         let authorizer = Authorizer {
@@ -237,14 +237,14 @@ mod errors {
     }
 
     #[test]
-    fn NoAuthorizer() {
+    fn no_authorizer() {
         if !in_ext() {
-            return ext().execute_with(NoAuthorizer);
+            return ext().execute_with(no_authorizer);
         }
 
         let authorizer_id = RGA;
 
-        let NoAuthorizer: Result<(), DispatchError> = Err(TrustError::<Test>::NoAuthorizer.into());
+        let no_authorizer: Result<(), DispatchError> = Err(TrustError::<Test>::NoAuthorizer.into());
 
         assert_eq!(
             TrustedEntityMod::add_issuer(
@@ -256,7 +256,7 @@ mod errors {
                 },
                 vec![]
             ),
-            NoAuthorizer
+            no_authorizer
         );
         assert_eq!(
             TrustedEntityMod::remove_issuer(
@@ -268,7 +268,7 @@ mod errors {
                 },
                 vec![],
             ),
-            NoAuthorizer
+            no_authorizer
         );
         assert_eq!(
             TrustedEntityMod::remove_authorizer(
@@ -279,7 +279,7 @@ mod errors {
                 },
                 vec![],
             ),
-            NoAuthorizer
+            no_authorizer
         );
     }
 
@@ -456,6 +456,7 @@ mod errors {
             | TrustError::InvalidPolicy
             | TrustError::NotAuthorized
             | TrustError::AuthorizerExists
+            | TrustError::AuthorizerNotExists
             | TrustError::NoAuthorizer
             | TrustError::IncorrectNonce
             | TrustError::AddOnly
@@ -475,7 +476,7 @@ mod calls {
     use super::*;
     // Cannot do `use super::super::*` as that would import `Call` as `Call` which conflicts with
     // `Call` in `test_common`
-    use super::super::{Authorizers, Call as TrstCall, Issuers, Verifiers};
+    use super::super::{Authorizers, Call as TrstCall, Issuers};
     use alloc::collections::BTreeSet;
     use frame_support::{StorageDoubleMap, StorageMap};
 
@@ -687,6 +688,8 @@ mod calls {
     fn _all_included(dummy: TrstCall<Test>) {
         match dummy {
             TrstCall::new_authorizer { .. }
+            | TrstCall::add_policy_controller { .. }
+            | TrstCall::remove_policy_controller { .. }
             | TrstCall::add_issuer { .. }
             | TrstCall::remove_issuer { .. }
             | TrstCall::add_verifier { .. }

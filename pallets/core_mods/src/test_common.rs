@@ -19,13 +19,12 @@ use frame_support::{
 };
 use frame_system as system;
 pub use rand::random;
-use sp_core::{sr25519, Pair, H160, H256};
+use sp_core::{sr25519, Pair, H256};
 use sp_runtime::{
     testing::Header,
     traits::{BlakeTwo256, ConstU32, IdentityLookup},
 };
 pub use std::iter::once;
-use system::RawOrigin;
 
 // Configure a mock runtime to test the pallet.
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;

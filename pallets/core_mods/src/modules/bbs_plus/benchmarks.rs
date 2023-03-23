@@ -15,7 +15,7 @@ const MAX_KEY: u32 = 256;
 
 crate::bench_with_all_pairs! {
     with_pairs:
-    add_params_sr25519 for sr25519, add_params_ed25519 for ed25519, add_params_secp256k1 for secp256k1 {
+    add_params_sr25519 for sr25519, add_params_ed25519 for ed25519 {
         {
             let b in 0 .. MAX_PARAMS => ();
             let l in 1 .. MAX_LABEL => ();
@@ -48,7 +48,7 @@ crate::bench_with_all_pairs! {
         assert_eq!(BbsPlusParams::get(BBSPlusParamsOwner(did), IncId::from(1u8)).unwrap(), params.clone());
     }
 
-    remove_params_sr25519 for sr25519, remove_params_ed25519 for ed25519, remove_params_secp256k1 for secp256k1 {
+    remove_params_sr25519 for sr25519, remove_params_ed25519 for ed25519 {
         let pair as Pair;
         let caller = whitelisted_caller();
         let did = Did([1; Did::BYTE_SIZE]);
@@ -85,7 +85,7 @@ crate::bench_with_all_pairs! {
         assert!(BbsPlusParams::get(BBSPlusParamsOwner(did), IncId::from(1u8)).is_none());
     }
 
-    add_public_sr25519 for sr25519, add_public_ed25519 for ed25519, add_public_secp256k1 for secp256k1 {
+    add_public_sr25519 for sr25519, add_public_ed25519 for ed25519 {
         {
             let b in 0 .. MAX_KEY;
         }
@@ -132,7 +132,7 @@ crate::bench_with_all_pairs! {
         assert_eq!(BbsPlusKeys::get(did, IncId::from(2u8)).unwrap(), key);
     }
 
-    remove_public_sr25519 for sr25519, remove_public_ed25519 for ed25519, remove_public_secp256k1 for secp256k1 {
+    remove_public_sr25519 for sr25519, remove_public_ed25519 for ed25519 {
         let pair as Pair;
         let caller = whitelisted_caller();
         let did = Did([1; Did::BYTE_SIZE]);

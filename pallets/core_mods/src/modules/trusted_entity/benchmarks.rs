@@ -15,7 +15,7 @@ pub fn oneof(dids: &[Did]) -> Policy {
 
 crate::bench_with_all_pairs! {
     with_pairs:
-    trusted_sr25519 for sr25519, trusted_ed25519 for ed25519, trusted_secp256k1 for secp256k1 {
+    trusted_sr25519 for sr25519, trusted_ed25519 for ed25519 {
         {
             let r in 1 .. MAX_TRUSTED_ENTITY as u32;
         }
@@ -52,7 +52,7 @@ vec![DidSigs { sig: signature, nonce: 1u32.into() }]) 	verify {
             .all(|id| TrustedEntities::contains_key(authorizer_id, id)));
     }
 
-    untrusted_sr25519 for sr25519, untrusted_ed25519 for ed25519, untrusted_secp256k1 for secp256k1 {
+    untrusted_sr25519 for sr25519, untrusted_ed25519 for ed25519 {
         {
             let r in 1 .. MAX_TRUSTED_ENTITY as u32;
         }
@@ -103,8 +103,7 @@ oneof(&[did]), add_only: false}}).unwrap();
             .all(|id| !TrustedEntities::contains_key(authorizer_id, id)));
     }
 
-    remove_authorizer_sr25519 for sr25519, remove_authorizer_ed25519 for ed25519,
-remove_authorizer_secp256k1 for secp256k1 {
+    remove_authorizer_sr25519 for sr25519, remove_authorizer_ed25519 for ed25519 {
         let pair as Pair;
         let caller = whitelisted_caller();
         let public = pair.public();

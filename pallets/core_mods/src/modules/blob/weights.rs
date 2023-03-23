@@ -30,7 +30,6 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
     fn new_sr25519(s: u32) -> Weight;
     fn new_ed25519(s: u32) -> Weight;
-    fn new_secp256k1(s: u32) -> Weight;
 }
 
 /// Weights for blob using the Substrate node and recommended hardware.
@@ -50,13 +49,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
             .saturating_add(T::DbWeight::get().reads(3 as u64))
             .saturating_add(T::DbWeight::get().writes(2 as u64))
     }
-    fn new_secp256k1(s: u32) -> Weight {
-        Weight::from_ref_time(152_477_000 as u64)
-            // Standard Error: 2_000
-            .saturating_add(Weight::from_ref_time(2_000 as u64).saturating_mul(s as u64))
-            .saturating_add(T::DbWeight::get().reads(3 as u64))
-            .saturating_add(T::DbWeight::get().writes(2 as u64))
-    }
 }
 
 // For backwards compatibility and tests
@@ -72,13 +64,6 @@ impl WeightInfo for () {
         Weight::from_ref_time(48_672_000 as u64)
             // Standard Error: 0
             .saturating_add(Weight::from_ref_time(9_000 as u64).saturating_mul(s as u64))
-            .saturating_add(RocksDbWeight::get().reads(3 as u64))
-            .saturating_add(RocksDbWeight::get().writes(2 as u64))
-    }
-    fn new_secp256k1(s: u32) -> Weight {
-        Weight::from_ref_time(152_477_000 as u64)
-            // Standard Error: 2_000
-            .saturating_add(Weight::from_ref_time(2_000 as u64).saturating_mul(s as u64))
             .saturating_add(RocksDbWeight::get().reads(3 as u64))
             .saturating_add(RocksDbWeight::get().writes(2 as u64))
     }

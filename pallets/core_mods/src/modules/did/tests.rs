@@ -6,9 +6,8 @@ use crate::{
         keys::{DidKeyError, UncheckedDidKey},
         service_endpoints::ServiceEndpointType,
     },
-    keys_and_sigs::{get_secp256k1_keypair, SigValue},
+    keys_and_sigs::SigValue,
     test_common::*,
-    util::{Bytes64, Bytes65},
 };
 use frame_support::{assert_err, assert_noop, assert_ok};
 use sp_core::{ed25519, sr25519, Pair};
@@ -240,17 +239,14 @@ fn onchain_keyed_did_creation_with_self_control() {
         let did_4: Did = [2; Did::BYTE_SIZE].into();
         let did_5: Did = [11; Did::BYTE_SIZE].into();
         let did_6: Did = [111; Did::BYTE_SIZE].into();
-        let did_7: Did = [71; Did::BYTE_SIZE].into();
         let did_8: Did = [82; Did::BYTE_SIZE].into();
         let did_9: Did = [83; Did::BYTE_SIZE].into();
         let did_10: Did = [84; Did::BYTE_SIZE].into();
-        let did_11: Did = [85; Did::BYTE_SIZE].into();
 
         let (pair_sr, _, _) = sr25519::Pair::generate_with_phrase(None);
         let pk_sr = pair_sr.public().0;
         let (pair_ed, _, _) = ed25519::Pair::generate_with_phrase(None);
         let pk_ed = pair_ed.public().0;
-        let (_, pk_secp) = get_secp256k1_keypair(&[21; 32]);
 
         run_to_block(5);
 
@@ -290,16 +286,15 @@ fn onchain_keyed_did_creation_with_self_control() {
 
         run_to_block(7);
 
-        // DID controls itself and specifies multiple another controllers as well
         assert_ok!(DIDModule::new_onchain(
             RuntimeOrigin::signed(alice),
             did_3,
-            vec![UncheckedDidKey::new(pk_secp.clone(), VerRelType::NONE)],
-            vec![did_1, did_2].into_iter().map(Controller).collect()
+            vec![UncheckedDidKey::new(
+                PublicKey::ed25519(pk_ed),
+                VerRelType::NONE
+            )],
+            vec![did_3].into_iter().map(Controller).collect()
         ));
-        assert!(DIDModule::is_self_controlled(&did_3));
-        check_did_detail(&did_3, 1, 1, 3, 7);
-
         let key_3 = DidKeys::get(&did_3, IncId::from(1u32)).unwrap();
         not_key_agreement(&key_3);
 
@@ -343,11 +338,7 @@ fn onchain_keyed_did_creation_with_self_control() {
             }
         }
 
-        for pk in vec![
-            PublicKey::sr25519(pk_sr),
-            PublicKey::ed25519(pk_ed),
-            pk_secp.clone(),
-        ] {
+        for pk in vec![PublicKey::sr25519(pk_sr), PublicKey::ed25519(pk_ed)] {
             for vr in vec![
                 VerRelType::AUTHENTICATION,
                 VerRelType::ASSERTION,
@@ -380,7 +371,6 @@ fn onchain_keyed_did_creation_with_self_control() {
         for (did, pk) in vec![
             (did_5, PublicKey::sr25519(pk_sr)),
             (did_6, PublicKey::ed25519(pk_ed)),
-            (did_7, pk_secp.clone()),
         ] {
             assert_ok!(DIDModule::new_onchain(
                 RuntimeOrigin::signed(alice),
@@ -412,7 +402,6 @@ fn onchain_keyed_did_creation_with_self_control() {
                 PublicKey::ed25519(pk_ed),
                 VerRelType::ASSERTION,
             ),
-            ([74; Did::BYTE_SIZE], pk_secp.clone(), VerRelType::ASSERTION),
             (
                 [75; Did::BYTE_SIZE],
                 PublicKey::sr25519(pk_sr),
@@ -421,11 +410,6 @@ fn onchain_keyed_did_creation_with_self_control() {
             (
                 [76; Did::BYTE_SIZE],
                 PublicKey::ed25519(pk_ed),
-                VerRelType::AUTHENTICATION,
-            ),
-            (
-                [77; Did::BYTE_SIZE],
-                pk_secp.clone(),
                 VerRelType::AUTHENTICATION,
             ),
         ] {
@@ -476,10 +460,6 @@ fn onchain_keyed_did_creation_with_self_control() {
             vec![
                 UncheckedDidKey::new(PublicKey::ed25519(pk_ed), VerRelType::AUTHENTICATION),
                 UncheckedDidKey::new(PublicKey::sr25519(pk_sr), VerRelType::ASSERTION),
-                UncheckedDidKey::new(
-                    pk_secp.clone(),
-                    VerRelType::ASSERTION | VerRelType::AUTHENTICATION
-                )
             ],
             vec![Controller(did_8.clone())].into_iter().collect()
         ));
@@ -492,68 +472,7 @@ fn onchain_keyed_did_creation_with_self_control() {
         assert!(key_9_2.can_sign());
         assert!(!key_9_2.can_authenticate());
         assert!(!key_9_2.can_control());
-        let key_9_3 = DidKeys::get(&did_9, IncId::from(3u32)).unwrap();
-        assert!(key_9_3.can_sign());
-        assert!(key_9_3.can_authenticate());
-        assert!(!key_9_3.can_control());
-        check_did_detail(&did_9, 3, 0, 1, 20);
-
-        run_to_block(22);
-
-        // Add multiple keys and specify multiple relationships
-        assert_ok!(DIDModule::new_onchain(
-            RuntimeOrigin::signed(alice),
-            did_10.clone(),
-            vec![
-                UncheckedDidKey::new(
-                    PublicKey::ed25519(pk_ed),
-                    VerRelType::AUTHENTICATION | VerRelType::ASSERTION
-                ),
-                UncheckedDidKey::new(PublicKey::sr25519(pk_sr), VerRelType::ASSERTION),
-                UncheckedDidKey::new(pk_secp, VerRelType::CAPABILITY_INVOCATION),
-            ],
-            vec![].into_iter().collect()
-        ));
-        assert!(DIDModule::is_self_controlled(&did_10));
-        let key_10_1 = DidKeys::get(&did_10, IncId::from(1u32)).unwrap();
-        assert!(key_10_1.can_sign());
-        assert!(key_10_1.can_authenticate());
-        assert!(!key_10_1.can_control());
-        let key_10_2 = DidKeys::get(&did_10, IncId::from(2u32)).unwrap();
-        assert!(key_10_2.can_sign());
-        assert!(!key_10_2.can_authenticate());
-        assert!(!key_10_2.can_control());
-        let key_10_3 = DidKeys::get(&did_10, IncId::from(3u32)).unwrap();
-        assert!(key_10_3.can_sign());
-        assert!(!key_10_3.can_authenticate());
-        assert!(key_10_3.can_control());
-        check_did_detail(&did_10, 3, 1, 1, 22);
-
-        run_to_block(23);
-
-        // Add multiple keys, specify multiple relationships and other controllers as well
-        assert_ok!(DIDModule::new_onchain(
-            RuntimeOrigin::signed(alice),
-            did_11.clone(),
-            vec![
-                UncheckedDidKey::new(
-                    PublicKey::ed25519(pk_ed),
-                    VerRelType::AUTHENTICATION | VerRelType::ASSERTION
-                ),
-                UncheckedDidKey::new(PublicKey::sr25519(pk_sr), VerRelType::CAPABILITY_INVOCATION),
-            ],
-            vec![did_1, did_2].into_iter().map(Controller).collect()
-        ));
-        assert!(DIDModule::is_self_controlled(&did_11));
-        let key_11_1 = DidKeys::get(&did_11, IncId::from(1u32)).unwrap();
-        assert!(key_11_1.can_sign());
-        assert!(key_11_1.can_authenticate());
-        assert!(!key_11_1.can_control());
-        let key_11_2 = DidKeys::get(&did_11, IncId::from(2u32)).unwrap();
-        assert!(key_11_2.can_sign());
-        assert!(!key_11_2.can_authenticate());
-        assert!(key_11_2.can_control());
-        check_did_detail(&did_11, 2, 1, 3, 23);
+        check_did_detail(&did_9, 2, 0, 1, 20);
     });
 }
 
@@ -566,7 +485,6 @@ fn onchain_keyed_did_creation_with_and_without_self_control() {
         let did_2: Did = [52; Did::BYTE_SIZE].into();
         let did_3: Did = [54; Did::BYTE_SIZE].into();
         let did_4: Did = [55; Did::BYTE_SIZE].into();
-        let did_5: Did = [56; Did::BYTE_SIZE].into();
         let did_6: Did = [57; Did::BYTE_SIZE].into();
 
         let controller_1 = Controller([61; Did::BYTE_SIZE].into());
@@ -578,7 +496,6 @@ fn onchain_keyed_did_creation_with_and_without_self_control() {
         let pk_sr = pair_sr.public().0;
         let (pair_ed, _, _) = ed25519::Pair::generate_with_phrase(None);
         let pk_ed = pair_ed.public().0;
-        let (_, pk_secp) = get_secp256k1_keypair(&[21; 32]);
 
         run_to_block(10);
 
@@ -646,44 +563,19 @@ fn onchain_keyed_did_creation_with_and_without_self_control() {
 
         run_to_block(14);
 
-        // DID is controlled by itself and another DID as well
-        assert_ok!(DIDModule::new_onchain(
-            RuntimeOrigin::signed(alice),
-            did_5,
-            vec![
-                UncheckedDidKey::new(
-                    pk_secp.clone(),
-                    VerRelType::AUTHENTICATION | VerRelType::CAPABILITY_INVOCATION
-                ),
-                UncheckedDidKey::new(PublicKey::ed25519(pk_ed), VerRelType::ASSERTION)
-            ],
-            vec![controller_1].into_iter().collect()
-        ));
-        assert!(DIDModule::is_self_controlled(&did_5));
-        assert!(DIDModule::is_controller(&did_5, &controller_1));
-        check_did_detail(&did_5, 2, 1, 2, 14);
-
-        run_to_block(15);
-
         // DID has 2 keys to control itself and another DID
         assert_ok!(DIDModule::new_onchain(
             RuntimeOrigin::signed(alice),
             did_6,
-            vec![
-                UncheckedDidKey::new(
-                    pk_secp,
-                    VerRelType::AUTHENTICATION | VerRelType::CAPABILITY_INVOCATION
-                ),
-                UncheckedDidKey::new(
-                    PublicKey::ed25519(pk_ed),
-                    VerRelType::ASSERTION | VerRelType::CAPABILITY_INVOCATION
-                )
-            ],
+            vec![UncheckedDidKey::new(
+                PublicKey::ed25519(pk_ed),
+                VerRelType::ASSERTION | VerRelType::CAPABILITY_INVOCATION
+            )],
             vec![controller_1].into_iter().collect()
         ));
         assert!(DIDModule::is_self_controlled(&did_6));
         assert!(DIDModule::is_controller(&did_6, &controller_1));
-        check_did_detail(&did_6, 2, 2, 2, 15);
+        check_did_detail(&did_6, 1, 1, 2, 14);
     });
 }
 
@@ -702,15 +594,16 @@ fn add_keys_to_did() {
         let pk_ed_1 = pair_ed_1.public().0;
         let (pair_ed_2, _, _) = ed25519::Pair::generate_with_phrase(None);
         let pk_ed_2 = pair_ed_2.public().0;
-        let (_, pk_secp_1) = get_secp256k1_keypair(&[21; 32]);
-        let (_, pk_secp_2) = get_secp256k1_keypair(&[22; 32]);
 
         run_to_block(3);
 
         // Add keys to a DID that has not been registered yet should fail
         let add_keys = AddKeys {
             did: did_1,
-            keys: vec![UncheckedDidKey::new(PublicKey::sr25519(pk_sr_1), VerRelType::NONE)],
+            keys: vec![UncheckedDidKey::new(
+                PublicKey::sr25519(pk_sr_1),
+                VerRelType::NONE,
+            )],
             nonce: 4,
         };
         let sig = SigValue::sr25519(&add_keys.to_state_change().encode(), &pair_sr_1);
@@ -753,11 +646,13 @@ fn add_keys_to_did() {
         let pk_sr = pair_sr.public().0;
         let (pair_ed, _, _) = ed25519::Pair::generate_with_phrase(None);
         let pk_ed = pair_ed.public().0;
-        let (_, pk_secp) = get_secp256k1_keypair(&[21; 32]);
 
         let add_keys = AddKeys {
             did: did_1,
-            keys: vec![UncheckedDidKey::new(PublicKey::sr25519(pk_sr_1), VerRelType::NONE)],
+            keys: vec![UncheckedDidKey::new(
+                PublicKey::sr25519(pk_sr_1),
+                VerRelType::NONE,
+            )],
             nonce: 5,
         };
         let sig = SigValue::sr25519(&add_keys.to_state_change().encode(), &pair_sr_1);
@@ -793,108 +688,16 @@ fn add_keys_to_did() {
         assert_ok!(DIDModule::new_onchain(
             RuntimeOrigin::signed(alice),
             did_2,
-            vec![UncheckedDidKey::new(PublicKey::ed25519(pk_ed_1), VerRelType::AUTHENTICATION)],
+            vec![UncheckedDidKey::new(
+                PublicKey::ed25519(pk_ed_1),
+                VerRelType::AUTHENTICATION
+            )],
             vec![did_1].into_iter().map(Controller).collect()
         ));
         assert!(!DIDModule::is_self_controlled(&did_2));
         check_did_detail(&did_2, 1, 0, 1, 7);
 
         run_to_block(10);
-
-        // Since did_2 does not control itself, it cannot add keys to itself
-        let add_keys = AddKeys {
-            did: did_2,
-            keys: vec![UncheckedDidKey::new(pk_secp_1.clone(), VerRelType::NONE)],
-            nonce: 5 + 1,
-        };
-        let sig = SigValue::ed25519(&add_keys.to_state_change().encode(), &pair_ed_1);
-        assert_noop!(
-            DIDModule::add_keys(
-                RuntimeOrigin::signed(alice),
-                add_keys,
-                DidSignature {
-                    did: Controller(did_2),
-                    key_id: 1u32.into(),
-                    sig
-                }
-            ),
-            Error::<Test>::OnlyControllerCanUpdate
-        );
-
-        // Nonce should be 1 greater than existing 5, i.e. 6
-        for nonce in vec![5, 7, 9, 10, 100, 10245] {
-            let add_keys = AddKeys {
-                did: did_2,
-                keys: vec![UncheckedDidKey::new(pk_secp_1.clone(), VerRelType::NONE)],
-                nonce,
-            };
-            let sig = SigValue::sr25519(&add_keys.to_state_change().encode(), &pair_sr_1);
-            assert_noop!(
-                DIDModule::add_keys(
-                    RuntimeOrigin::signed(alice),
-                    add_keys,
-                    DidSignature {
-                        did: Controller(did_1),
-                        key_id: 1u32.into(),
-                        sig
-                    }
-                ),
-                Error::<Test>::IncorrectNonce
-            );
-        }
-
-        // Invalid signature should fail
-        let add_keys = AddKeys {
-            did: did_2,
-            keys: vec![UncheckedDidKey::new(pk_secp_1.clone(), VerRelType::NONE)],
-            nonce: 5 + 1,
-        };
-        // Using some arbitrary bytes as signature
-        let sig = SigValue::Sr25519(Bytes64 { value: [109; 64] });
-        assert_noop!(
-            DIDModule::add_keys(
-                RuntimeOrigin::signed(alice),
-                add_keys,
-                DidSignature {
-                    did: Controller(did_1),
-                    key_id: 1u32.into(),
-                    sig
-                }
-            ),
-            Error::<Test>::InvalidSignature
-        );
-
-        // Using wrong key_id should fail
-        let add_keys = AddKeys {
-            did: did_2,
-            keys: vec![UncheckedDidKey::new(pk_secp_1.clone(), VerRelType::NONE)],
-            nonce: 5 + 1,
-        };
-        let sig = SigValue::sr25519(&add_keys.to_state_change().encode(), &pair_sr_1);
-        assert_noop!(
-            DIDModule::add_keys(
-                RuntimeOrigin::signed(alice),
-                add_keys,
-                DidSignature {
-                    did: Controller(did_1),
-                    key_id: 2u32.into(),
-                    sig
-                }
-            ),
-            Error::<Test>::InvalidSignature
-        );
-
-        // Using wrong key type should fail
-        assert_err!(
-            DidKey::new(pk_secp_1.clone(), VerRelType::KEY_AGREEMENT),
-            DidKeyError::SigningKeyCantBeUsedForKeyAgreement
-        );
-        assert_err!(
-            DidKey::decode(
-                &mut &UncheckedDidKey::new(pk_secp_1.clone(), VerRelType::KEY_AGREEMENT).encode()[..]
-            ),
-            codec::Error::from("SigningKeyCantBeUsedForKeyAgreement")
-        );
 
         // x25519 key cannot be added for incompatible relationship types
         for add in vec![VerRelType::NONE, VerRelType::KEY_AGREEMENT] {
@@ -930,11 +733,7 @@ fn add_keys_to_did() {
             }
         }
 
-        for pk in vec![
-            PublicKey::sr25519(pk_sr),
-            PublicKey::ed25519(pk_ed),
-            pk_secp.clone(),
-        ] {
+        for pk in vec![PublicKey::sr25519(pk_sr), PublicKey::ed25519(pk_ed)] {
             for vr in vec![
                 VerRelType::AUTHENTICATION,
                 VerRelType::ASSERTION,
@@ -967,11 +766,13 @@ fn add_keys_to_did() {
             }
         }
 
-
         // Add x25519 key
         let add_keys = AddKeys {
             did: did_2,
-            keys: vec![UncheckedDidKey::new(PublicKey::x25519(pk_ed_1), VerRelType::KEY_AGREEMENT)],
+            keys: vec![UncheckedDidKey::new(
+                PublicKey::x25519(pk_ed_1),
+                VerRelType::KEY_AGREEMENT,
+            )],
             nonce: 5 + 1,
         };
         let sig = SigValue::sr25519(&add_keys.to_state_change().encode(), &pair_sr_1);
@@ -990,58 +791,13 @@ fn add_keys_to_did() {
 
         only_key_agreement(&DidKeys::get(&did_2, IncId::from(2u32)).unwrap());
 
-        // Add many keys
-        let add_keys = AddKeys {
-            did: did_2,
-            keys: vec![
-                UncheckedDidKey::new(PublicKey::x25519(pk_sr_2), VerRelType::KEY_AGREEMENT),
-                UncheckedDidKey::new(PublicKey::ed25519(pk_ed_1), VerRelType::ASSERTION),
-                UncheckedDidKey::new(
-                    pk_secp_2,
-                    VerRelType::AUTHENTICATION | VerRelType::ASSERTION,
-                )
-                ,
-            ],
-            nonce: 6 + 1,
-        };
-
-        // Controller uses a key without the capability to update DID
-        let sig = SigValue::ed25519(&add_keys.to_state_change().encode(), &pair_ed_2);
-        assert_noop!(
-            DIDModule::add_keys(
-                RuntimeOrigin::signed(alice),
-                add_keys.clone(),
-                DidSignature {
-                    did: Controller(did_1),
-                    key_id: 3u32.into(),
-                    sig
-                }
-            ),
-            Error::<Test>::InsufficientVerificationRelationship
-        );
-
-        // Controller uses the correct key
-        let sig = SigValue::sr25519(&add_keys.to_state_change().encode(), &pair_sr_2);
-        assert_ok!(DIDModule::add_keys(
-            RuntimeOrigin::signed(alice),
-            add_keys,
-            DidSignature {
-                did: Controller(did_1),
-                key_id: 2u32.into(),
-                sig
-            }
-        ));
-        assert!(!DIDModule::is_self_controlled(&did_2));
-        check_did_detail(&did_2, 5, 0, 1, 7);
-        check_did_detail(&did_1, 3, 2, 1, 7);
-        DidKeys::get(&did_2, IncId::from(3u32)).unwrap();
-        DidKeys::get(&did_2, IncId::from(4u32)).unwrap();
-        DidKeys::get(&did_2, IncId::from(5u32)).unwrap();
-
         let add_keys = AddKeys {
             did: did_1,
-            keys: vec![UncheckedDidKey::new(PublicKey::ed25519(pk_ed_1), VerRelType::NONE)],
-            nonce: 7 + 1,
+            keys: vec![UncheckedDidKey::new(
+                PublicKey::ed25519(pk_ed_1),
+                VerRelType::NONE,
+            )],
+            nonce: 6 + 1,
         };
         let sig = SigValue::sr25519(&add_keys.to_state_change().encode(), &pair_sr_1);
         assert_ok!(DIDModule::add_keys(
@@ -1054,7 +810,7 @@ fn add_keys_to_did() {
             }
         ));
 
-        check_did_detail(&did_1, 4, 3, 1, 8);
+        check_did_detail(&did_1, 4, 3, 1, 7);
         DidKeys::get(&did_1, IncId::from(4u32)).unwrap()
     });
 }
@@ -1421,16 +1177,12 @@ fn add_controllers_to_did() {
         let did_1: Did = [51; Did::BYTE_SIZE].into();
         let did_2: Did = [52; Did::BYTE_SIZE].into();
         let did_3: Did = [53; Did::BYTE_SIZE].into();
-        let did_4: Did = [54; Did::BYTE_SIZE].into();
-        let did_5: Did = [55; Did::BYTE_SIZE].into();
 
         // Add keys to a DID that has not been registered yet should fail
         let (pair_sr, _, _) = sr25519::Pair::generate_with_phrase(None);
         let pk_sr = pair_sr.public().0;
         let (pair_ed, _, _) = ed25519::Pair::generate_with_phrase(None);
-        let pk_ed = pair_ed.public().0;
-        let (sk_secp_1, pk_secp_1) = get_secp256k1_keypair(&[21; 32]);
-        let (sk_secp_2, pk_secp_2) = get_secp256k1_keypair(&[22; 32]);
+        let _pk_ed = pair_ed.public().0;
 
         run_to_block(5);
 
@@ -1459,7 +1211,7 @@ fn add_controllers_to_did() {
             controllers: vec![did_2].into_iter().map(Controller).collect(),
             nonce: 5,
         };
-        let sig = SigValue::sr25519(&add_controllers.to_state_change().encode(), &pair_sr);
+        let sig = SigValue::ed25519(&add_controllers.to_state_change().encode(), &pair_ed);
         assert_noop!(
             DIDModule::add_controllers(
                 RuntimeOrigin::signed(alice),
@@ -1473,33 +1225,6 @@ fn add_controllers_to_did() {
             Error::<Test>::OnlyControllerCanUpdate
         );
 
-        // This DID controls itself
-        assert_ok!(DIDModule::new_onchain(
-            RuntimeOrigin::signed(alice),
-            did_1,
-            vec![
-                UncheckedDidKey::new(pk_secp_1.clone(), VerRelType::NONE),
-                UncheckedDidKey::new(PublicKey::ed25519(pk_ed), VerRelType::AUTHENTICATION),
-            ],
-            vec![].into_iter().collect()
-        ));
-        assert!(DIDModule::is_self_controlled(&did_1));
-        check_did_detail(&did_1, 2, 1, 1, 5);
-
-        run_to_block(6);
-
-        // This DID is controlled by itself and another DID as well
-        assert_ok!(DIDModule::new_onchain(
-            RuntimeOrigin::signed(alice),
-            did_3,
-            vec![UncheckedDidKey::new(pk_secp_2.clone(), VerRelType::NONE)],
-            vec![did_1].into_iter().map(Controller).collect()
-        ));
-        assert!(DIDModule::is_self_controlled(&did_1));
-
-        check_did_detail(&did_3, 1, 1, 2, 6);
-
-        run_to_block(10);
         // This DID does not control itself
         assert_ok!(DIDModule::new_onchain(
             RuntimeOrigin::signed(alice),
@@ -1512,7 +1237,8 @@ fn add_controllers_to_did() {
         ));
         assert!(!DIDModule::is_self_controlled(&did_2));
         assert!(DIDModule::is_controller(&did_2, &Controller(did_1)));
-        check_did_detail(&did_2, 1, 0, 1, 10);
+
+        check_did_detail(&did_2, 1, 0, 1, 5);
 
         run_to_block(15);
 
@@ -1536,107 +1262,7 @@ fn add_controllers_to_did() {
             Error::<Test>::OnlyControllerCanUpdate
         );
 
-        // Nonce should be 1 greater than existing 5, i.e. 6
-        for nonce in vec![5, 7, 8, 9, 10, 11, 12, 25000] {
-            let add_controllers = AddControllers {
-                did: did_2,
-                controllers: vec![did_3].into_iter().map(Controller).collect(),
-                nonce,
-            };
-            let sig = SigValue::secp256k1(&add_controllers.to_state_change().encode(), &sk_secp_1);
-            assert_noop!(
-                DIDModule::add_controllers(
-                    RuntimeOrigin::signed(alice),
-                    add_controllers,
-                    DidSignature {
-                        did: Controller(did_1),
-                        key_id: 1u32.into(),
-                        sig
-                    }
-                ),
-                Error::<Test>::IncorrectNonce
-            );
-        }
-
-        // Invalid signature should fail
-        let add_controllers = AddControllers {
-            did: did_2,
-            controllers: vec![did_3].into_iter().map(Controller).collect(),
-            nonce: 5 + 1,
-        };
-        let sig = SigValue::Secp256k1(Bytes65 { value: [35; 65] });
-        assert_noop!(
-            DIDModule::add_controllers(
-                RuntimeOrigin::signed(alice),
-                add_controllers.clone(),
-                DidSignature {
-                    did: Controller(did_1),
-                    key_id: 1u32.into(),
-                    sig
-                }
-            ),
-            Error::<Test>::InvalidSignature
-        );
-
-        // Valid signature should work
-        let sig = SigValue::secp256k1(&add_controllers.to_state_change().encode(), &sk_secp_1);
-        assert_ok!(DIDModule::add_controllers(
-            RuntimeOrigin::signed(alice),
-            add_controllers,
-            DidSignature {
-                did: Controller(did_1),
-                key_id: 1u32.into(),
-                sig
-            }
-        ));
-        assert!(!DIDModule::is_self_controlled(&did_2));
-        assert!(DIDModule::is_controller(&did_2, &Controller(did_3)));
-        check_did_detail(&did_1, 2, 1, 1, 6);
-        check_did_detail(&did_2, 1, 0, 2, 10);
-
-        run_to_block(15);
-
-        // Add many controllers
-        let add_controllers = AddControllers {
-            did: did_2,
-            controllers: vec![did_4, did_5].into_iter().map(Controller).collect(),
-            nonce: 6 + 1,
-        };
-        let sig = SigValue::secp256k1(&add_controllers.to_state_change().encode(), &sk_secp_2);
-        assert_ok!(DIDModule::add_controllers(
-            RuntimeOrigin::signed(alice),
-            add_controllers,
-            DidSignature {
-                did: Controller(did_3),
-                key_id: 1u32.into(),
-                sig
-            }
-        ));
-        assert!(!DIDModule::is_self_controlled(&did_2));
-        assert!(DIDModule::is_controller(&did_2, &Controller(did_4)));
-        assert!(DIDModule::is_controller(&did_2, &Controller(did_5)));
-        check_did_detail(&did_3, 1, 1, 2, 7);
-        check_did_detail(&did_2, 1, 0, 4, 10);
-
-        // Add controllers to self
-        let add_controllers = AddControllers {
-            did: did_3,
-            controllers: vec![did_4, did_5].into_iter().map(Controller).collect(),
-            nonce: 7 + 1,
-        };
-        let sig = SigValue::secp256k1(&add_controllers.to_state_change().encode(), &sk_secp_2);
-        assert_ok!(DIDModule::add_controllers(
-            RuntimeOrigin::signed(alice),
-            add_controllers,
-            DidSignature {
-                did: Controller(did_3),
-                key_id: 1u32.into(),
-                sig
-            }
-        ));
-        assert!(DIDModule::is_controller(&did_3, &Controller(did_4)));
-        assert!(DIDModule::is_controller(&did_3, &Controller(did_5)));
-        check_did_detail(&did_3, 1, 1, 4, 8);
+        check_did_detail(&did_2, 1, 0, 1, 5);
     });
 }
 
@@ -1653,7 +1279,6 @@ fn becoming_controller() {
         let pk_sr = pair_sr.public().0;
         let (pair_ed, _, _) = ed25519::Pair::generate_with_phrase(None);
         let pk_ed = pair_ed.public().0;
-        let (_, pk_secp) = get_secp256k1_keypair(&[21; 32]);
 
         run_to_block(5);
 
@@ -1705,30 +1330,6 @@ fn becoming_controller() {
         assert!(!DIDModule::is_self_controlled(&did_2));
         check_did_detail(&did_2, 2, 0, 1, 10);
         check_did_detail(&did_1, 1, 1, 1, 6);
-
-        run_to_block(20);
-
-        let add_keys = AddKeys {
-            did: did_2,
-            keys: vec![UncheckedDidKey::new(
-                pk_secp.clone(),
-                VerRelType::CAPABILITY_INVOCATION,
-            )],
-            nonce: 6 + 1,
-        };
-        let sig = SigValue::sr25519(&add_keys.to_state_change().encode(), &pair_sr);
-        assert_ok!(DIDModule::add_keys(
-            RuntimeOrigin::signed(alice),
-            add_keys,
-            DidSignature {
-                did: Controller(did_1),
-                key_id: 1u32.into(),
-                sig
-            }
-        ));
-        assert!(DIDModule::is_self_controlled(&did_2));
-        check_did_detail(&did_2, 3, 1, 2, 10);
-        check_did_detail(&did_1, 1, 1, 1, 7);
     });
 }
 
@@ -1746,7 +1347,6 @@ fn any_controller_can_update() {
         let pk_sr = pair_sr.public().0;
         let (pair_ed, _, _) = ed25519::Pair::generate_with_phrase(None);
         let pk_ed = pair_ed.public().0;
-        let (_, pk_secp) = get_secp256k1_keypair(&[21; 32]);
 
         run_to_block(3);
 
@@ -1779,7 +1379,10 @@ fn any_controller_can_update() {
         assert_ok!(DIDModule::new_onchain(
             RuntimeOrigin::signed(alice),
             did_3,
-            vec![UncheckedDidKey::new(pk_secp.clone(), VerRelType::NONE)],
+            vec![UncheckedDidKey::new(
+                PublicKey::sr25519(pk_sr),
+                VerRelType::NONE
+            )],
             vec![].into_iter().collect()
         ));
         assert!(DIDModule::is_self_controlled(&did_3));
@@ -1790,16 +1393,19 @@ fn any_controller_can_update() {
         assert_ok!(DIDModule::new_onchain(
             RuntimeOrigin::signed(alice),
             did_4,
-            vec![UncheckedDidKey::new(pk_secp.clone(), VerRelType::NONE)],
-            vec![did_2].into_iter().map(Controller).collect()
+            vec![UncheckedDidKey::new(
+                PublicKey::sr25519(pk_sr),
+                VerRelType::NONE
+            )],
+            vec![].into_iter().collect()
         ));
         assert!(DIDModule::is_self_controlled(&did_4));
-        check_did_detail(&did_4, 1, 1, 2, 7);
+        check_did_detail(&did_4, 1, 1, 1, 7);
 
         run_to_block(14);
 
         let add_controllers = AddControllers {
-            did: did_4,
+            did: did_2,
             controllers: vec![did_1].into_iter().map(Controller).collect(),
             nonce: 5 + 1,
         };
@@ -1813,13 +1419,13 @@ fn any_controller_can_update() {
                 sig
             }
         ));
-        check_did_detail(&did_4, 1, 1, 3, 7);
-        check_did_detail(&did_2, 1, 1, 1, 6);
+        check_did_detail(&did_4, 1, 1, 1, 7);
+        check_did_detail(&did_2, 1, 1, 2, 6);
 
         run_to_block(15);
 
         let add_keys = AddKeys {
-            did: did_4,
+            did: did_1,
             keys: vec![UncheckedDidKey::new(
                 PublicKey::sr25519(pk_sr),
                 VerRelType::NONE,
@@ -1836,9 +1442,9 @@ fn any_controller_can_update() {
                 sig
             }
         ));
-        check_did_detail(&did_4, 2, 2, 3, 7);
-        check_did_detail(&did_1, 1, 1, 1, 4);
-    });
+        check_did_detail(&did_4, 1, 1, 1, 7);
+        check_did_detail(&did_1, 2, 2, 1, 4);
+    })
 }
 
 #[test]
@@ -2628,7 +2234,6 @@ fn valid_key() {
     let pk_sr = pair_sr.public().0;
     let (pair_ed, _, _) = ed25519::Pair::generate_with_phrase(None);
     let pk_ed = pair_ed.public().0;
-    let (_, pk_secp) = get_secp256k1_keypair(&[21; 32]);
 
     // x25519 key cannot be added for incompatible relationship types
     for add in vec![VerRelType::NONE, VerRelType::KEY_AGREEMENT] {
@@ -2654,11 +2259,7 @@ fn valid_key() {
     }
 
     // signing keys can't be used for key agreement
-    for pk in vec![
-        PublicKey::sr25519(pk_sr),
-        PublicKey::ed25519(pk_ed),
-        pk_secp.clone(),
-    ] {
+    for pk in vec![PublicKey::sr25519(pk_sr), PublicKey::ed25519(pk_ed)] {
         for vr in vec![
             VerRelType::AUTHENTICATION,
             VerRelType::ASSERTION,

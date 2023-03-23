@@ -11,7 +11,7 @@ const MAX_LEN: u32 = 10_000;
 
 crate::bench_with_all_pairs! {
     with_pairs:
-    set_claim_sr25519 for sr25519, set_claim_ed25519 for ed25519, set_claim_secp256k1 for secp256k1 {
+    set_claim_sr25519 for sr25519, set_claim_ed25519 for ed25519 {
         {
             let l in 0 .. MAX_LEN => ();
         }

@@ -333,7 +333,6 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         (match sig {
             SigValue::Sr25519(_) => Self::add_keys_sr25519,
             SigValue::Ed25519(_) => Self::add_keys_ed25519,
-            // SigValue::Secp256k1(_) => Self::add_keys_secp256k1,
         }(keys.len() as u32))
     }
 
@@ -344,7 +343,6 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         (match sig {
             SigValue::Sr25519(_) => Self::remove_keys_sr25519,
             SigValue::Ed25519(_) => Self::remove_keys_ed25519,
-            // SigValue::Secp256k1(_) => Self::remove_keys_secp256k1,
         }(keys.len() as u32))
     }
 
@@ -355,7 +353,6 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         (match sig {
             SigValue::Sr25519(_) => Self::add_controllers_sr25519,
             SigValue::Ed25519(_) => Self::add_controllers_ed25519,
-            // SigValue::Secp256k1(_) => Self::add_controllers_secp256k1,
         }(controllers.len() as u32))
     }
 
@@ -366,7 +363,6 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         (match sig {
             SigValue::Sr25519(_) => Self::remove_controllers_sr25519,
             SigValue::Ed25519(_) => Self::remove_controllers_ed25519,
-            // SigValue::Secp256k1(_) => Self::remove_controllers_secp256k1,
         }(controllers.len() as u32))
     }
 
@@ -377,7 +373,6 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         (match sig {
             SigValue::Sr25519(_) => Self::add_service_endpoint_sr25519,
             SigValue::Ed25519(_) => Self::add_service_endpoint_ed25519,
-            // SigValue::Secp256k1(_) => Self::add_service_endpoint_secp256k1,
         })(
             endpoint.origins.len() as u32,
             endpoint
@@ -398,7 +393,6 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         (match sig {
             SigValue::Sr25519(_) => Self::remove_service_endpoint_sr25519,
             SigValue::Ed25519(_) => Self::remove_service_endpoint_ed25519,
-            // SigValue::Secp256k1(_) => Self::remove_service_endpoint_secp256k1,
         }(id.len() as u32))
     }
 
@@ -409,7 +403,6 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         (match sig {
             SigValue::Sr25519(_) => Self::remove_onchain_did_sr25519,
             SigValue::Ed25519(_) => Self::remove_onchain_did_ed25519,
-            // SigValue::Secp256k1(_) => Self::remove_onchain_did_secp256k1,
         }())
     }
 }

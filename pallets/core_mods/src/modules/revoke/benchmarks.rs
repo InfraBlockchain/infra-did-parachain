@@ -15,7 +15,7 @@ pub fn oneof(dids: &[Did]) -> Policy {
 
 crate::bench_with_all_pairs! {
     with_pairs:
-    revoke_sr25519 for sr25519, revoke_ed25519 for ed25519, revoke_secp256k1 for secp256k1 {
+    revoke_sr25519 for sr25519, revoke_ed25519 for ed25519 {
         {
             let r in 1 .. MAX_REVOCATIONS as u32;
         }
@@ -52,7 +52,7 @@ crate::bench_with_all_pairs! {
             .all(|id| Revocations::contains_key(reg_id, id)));
     }
 
-    unrevoke_sr25519 for sr25519, unrevoke_ed25519 for ed25519, unrevoke_secp256k1 for secp256k1 {
+    unrevoke_sr25519 for sr25519, unrevoke_ed25519 for ed25519 {
         {
             let r in 1 .. MAX_REVOCATIONS as u32;
         }
@@ -102,7 +102,7 @@ crate::bench_with_all_pairs! {
             .all(|id| !Revocations::contains_key(reg_id, id)));
     }
 
-    remove_registry_sr25519 for sr25519, remove_registry_ed25519 for ed25519, remove_registry_secp256k1 for secp256k1 {
+    remove_registry_sr25519 for sr25519, remove_registry_ed25519 for ed25519 {
         let pair as Pair;
         let caller = whitelisted_caller();
         let public = pair.public();

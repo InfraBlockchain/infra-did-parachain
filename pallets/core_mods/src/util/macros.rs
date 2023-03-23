@@ -353,9 +353,6 @@ macro_rules! def_test_pair {
 
         sp_core::ed25519::Pair::from_seed($seed)
     }};
-    (secp256k1, $seed: expr) => {
-        $crate::keys_and_sigs::get_secp256k1_keypair_1($seed)
-    };
 }
 
 /// Repeats the benchmark for every pair.
@@ -367,7 +364,6 @@ macro_rules! bench_with_all_pairs {
             $(
                 $bench_name_sr25519: ident for sr25519,
                 $bench_name_ed25519: ident for ed25519,
-                $bench_name_secp256k1: ident for secp256k1
                 {
                     $({ $($init: tt)* })?
                     let $pair: ident as Pair;
@@ -397,14 +393,6 @@ macro_rules! bench_with_all_pairs {
                     #[allow(unused_imports)]
                     use sp_core::Pair;
                     let $pair = $crate::def_test_pair!(ed25519, &[3; 32]);
-                    $($body)+
-                }: $call_tt($($call_e),+) verify { $($verification)* }
-
-                $bench_name_secp256k1 {
-                    $($($init)*)*
-                    #[allow(unused_imports)]
-                    use sp_core::Pair;
-                    let $pair = $crate::def_test_pair!(secp256k1, &[2; 32]);
                     $($body)+
                 }: $call_tt($($call_e),+) verify { $($verification)* }
             )+

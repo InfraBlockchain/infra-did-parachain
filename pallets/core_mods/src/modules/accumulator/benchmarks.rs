@@ -11,7 +11,7 @@ const MAX_KEY: u32 = 256;
 
 crate::bench_with_all_pairs! {
     with_pairs:
-    add_params_sr25519 for sr25519, add_params_ed25519 for ed25519, add_params_secp256k1 for secp256k1 {
+    add_params_sr25519 for sr25519, add_params_ed25519 for ed25519 {
         {
             let b in 0 .. MAX_PARAMS => ();
             let l in 1 .. MAX_LABEL => ();
@@ -45,7 +45,7 @@ crate::bench_with_all_pairs! {
         assert_eq!(AccumulatorParams::get(AccumulatorOwner(did), IncId::from(1u8)).unwrap(), params);
     }
 
-    remove_params_sr25519 for sr25519, remove_params_ed25519 for ed25519, remove_params_secp256k1 for secp256k1 {
+    remove_params_sr25519 for sr25519, remove_params_ed25519 for ed25519 {
         let pair as Pair;
         let caller = whitelisted_caller();
         let did = Did([1; Did::BYTE_SIZE]);
@@ -83,7 +83,7 @@ crate::bench_with_all_pairs! {
         assert!(AccumulatorParams::get(AccumulatorOwner(did), IncId::from(1u8)).is_none());
     }
 
-    add_public_sr25519 for sr25519, add_public_ed25519 for ed25519, add_public_secp256k1 for secp256k1 {
+    add_public_sr25519 for sr25519, add_public_ed25519 for ed25519 {
         {
             let b in 0 .. MAX_KEY;
         }
@@ -130,7 +130,7 @@ crate::bench_with_all_pairs! {
         assert_eq!(AccumulatorKeys::get(AccumulatorOwner(did), IncId::from(1u8)).unwrap(), public_key);
     }
 
-    remove_public_sr25519 for sr25519, remove_public_ed25519 for ed25519, remove_public_secp256k1 for secp256k1 {
+    remove_public_sr25519 for sr25519, remove_public_ed25519 for ed25519 {
         let pair as Pair;
         let caller = whitelisted_caller();
         let did = Did([1; Did::BYTE_SIZE]);
@@ -181,7 +181,7 @@ crate::bench_with_all_pairs! {
         assert!(AccumulatorKeys::get(AccumulatorOwner(did), IncId::from(1u8)).is_none());
     }
 
-    add_accumulator_sr25519 for sr25519, add_accumulator_ed25519 for ed25519, add_accumulator_secp256k1 for secp256k1 {
+    add_accumulator_sr25519 for sr25519, add_accumulator_ed25519 for ed25519 {
         {
             let b in 0 .. MAX_ACC;
         }
@@ -243,7 +243,7 @@ crate::bench_with_all_pairs! {
         assert_eq!(Accumulators::<T>::get(acc_id).unwrap().accumulator, accumulator);
     }
 
-    update_accumulator_sr25519 for sr25519, update_accumulator_ed25519 for ed25519, update_accumulator_secp256k1 for secp256k1 {
+    update_accumulator_sr25519 for sr25519, update_accumulator_ed25519 for ed25519 {
         {
             let a in 0 .. MAX_ACC;
             let b in 0 .. 30;
@@ -323,7 +323,7 @@ crate::bench_with_all_pairs! {
         assert_eq!(Accumulators::<T>::get(acc_id).unwrap().accumulator.accumulated(), new_accumulated);
     }
 
-    remove_accumulator_sr25519 for sr25519, remove_accumulator_ed25519 for ed25519, remove_accumulator_secp256k1 for secp256k1 {
+    remove_accumulator_sr25519 for sr25519, remove_accumulator_ed25519 for ed25519 {
         let pair as Pair;
         let caller = whitelisted_caller();
         let did = Did([1; Did::BYTE_SIZE]);

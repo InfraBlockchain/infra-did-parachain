@@ -179,7 +179,6 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         (match sig {
             SigValue::Sr25519(_) => Self::add_params_sr25519,
             SigValue::Ed25519(_) => Self::add_params_ed25519,
-            // SigValue::Secp256k1(_) => Self::add_params_secp256k1,
         }(
             add_params.params.bytes.len() as u32,
             add_params.params.label.as_ref().map_or(0, |v| v.len()) as u32,
@@ -193,7 +192,6 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         (match sig {
             SigValue::Sr25519(_) => Self::add_public_sr25519,
             SigValue::Ed25519(_) => Self::add_public_ed25519,
-            // SigValue::Secp256k1(_) => Self::add_public_secp256k1,
         }(public_key.key.bytes.len() as u32))
     }
 
@@ -204,7 +202,6 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         (match sig {
             SigValue::Sr25519(_) => Self::remove_params_sr25519,
             SigValue::Ed25519(_) => Self::remove_params_ed25519,
-            // SigValue::Secp256k1(_) => Self::remove_params_secp256k1,
         }())
     }
 
@@ -215,7 +212,6 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         (match sig {
             SigValue::Sr25519(_) => Self::remove_public_sr25519,
             SigValue::Ed25519(_) => Self::remove_public_ed25519,
-            // SigValue::Secp256k1(_) => Self::remove_public_secp256k1,
         }())
     }
 }

@@ -140,7 +140,6 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         (match sig {
             SigValue::Sr25519(_) => Self::set_claim_sr25519,
             SigValue::Ed25519(_) => Self::set_claim_ed25519,
-            // SigValue::Secp256k1(_) => Self::set_claim_secp256k1,
         }(attest.iri.as_ref().map_or(0, |v| v.len()) as u32))
     }
 }

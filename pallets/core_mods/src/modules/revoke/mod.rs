@@ -1,12 +1,9 @@
 use crate as dock;
 use crate::{
     did::{self, Did, DidSignature},
-    // keys_and_sigs::{SigValue, ED25519_WEIGHT, SECP256K1_WEIGHT, SR25519_WEIGHT},
     keys_and_sigs::{SigValue, ED25519_WEIGHT, SR25519_WEIGHT},
     util::{NonceError, WithNonce},
-    Action,
-    StorageVersion,
-    ToStateChange,
+    Action, StorageVersion, ToStateChange,
 };
 use alloc::collections::BTreeSet;
 use codec::{Decode, Encode};
@@ -100,17 +97,15 @@ pub struct Registry {
 }
 
 /// Return counts of different signature types in given `DidSigs` as 3-Tuple as (no. of Sr22519 sigs,
-/// no. of Ed25519 Sigs, no. of Secp256k1 sigs). Useful for weight calculation and thus the return
+/// no. of Ed25519 Sigs). Useful for weight calculation and thus the return
 /// type is in `Weight` but realistically, it should fit in a u8
 fn count_sig_types<T: frame_system::Config>(auth: &[DidSigs<T>]) -> (u64, u64) {
     let mut sr = 0;
     let mut ed = 0;
-    // let mut secp = 0;
     for a in auth.iter() {
         match a.sig.sig {
             SigValue::Sr25519(_) => sr += 1,
             SigValue::Ed25519(_) => ed += 1,
-            // SigValue::Secp256k1(_) => secp += 1,
         }
     }
     (sr, ed)
@@ -128,7 +123,6 @@ pub fn get_weight_for_did_sigs<T: frame_system::Config>(
         .reads(auth.len() as u64)
         .saturating_add(SR25519_WEIGHT.saturating_mul(sr))
         .saturating_add(ED25519_WEIGHT.saturating_mul(ed))
-    // .saturating_add(SECP256K1_WEIGHT.saturating_mul(secp))
 }
 
 pub trait Config: system::Config + did::Config {
@@ -299,7 +293,6 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         match sig.sig {
             SigValue::Sr25519(_) => Self::revoke_sr25519,
             SigValue::Ed25519(_) => Self::revoke_ed25519,
-            // SigValue::Secp256k1(_) => Self::revoke_secp256k1,
         }
     }
 
@@ -307,7 +300,6 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         match sig.sig {
             SigValue::Sr25519(_) => Self::unrevoke_sr25519,
             SigValue::Ed25519(_) => Self::unrevoke_ed25519,
-            // SigValue::Secp256k1(_) => Self::unrevoke_secp256k1,
         }
     }
 
@@ -315,7 +307,6 @@ impl<T: frame_system::Config> SubstrateWeight<T> {
         (match sig.sig {
             SigValue::Sr25519(_) => Self::remove_registry_sr25519,
             SigValue::Ed25519(_) => Self::remove_registry_ed25519,
-            // SigValue::Secp256k1(_) => Self::remove_registry_secp256k1,
         }())
     }
 }

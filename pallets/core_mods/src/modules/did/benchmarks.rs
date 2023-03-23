@@ -16,7 +16,7 @@ const MAX_SERVICE_ENDPOINT_ID_LENGTH: u32 = 100;
 
 crate::bench_with_all_pairs! {
     with_pairs:
-    add_keys_sr25519 for sr25519, add_keys_ed25519 for ed25519, add_keys_secp256k1 for secp256k1 {
+    add_keys_sr25519 for sr25519, add_keys_ed25519 for ed25519 {
         {
             let k in 1 .. MAX_ENTITY_AMOUNT;
         }
@@ -33,7 +33,7 @@ crate::bench_with_all_pairs! {
 
         let keys: Vec<_> =
             (0..k)
-                .map(|idx| crate::def_test_pair!(secp256k1, &[10 + idx as u8; 32]).public())
+                .map(|idx| crate::def_test_pair!(sr25519, &[10 + idx as u8; 32]).public())
                 .map(UncheckedDidKey::new_with_all_relationships)
                 .collect();
 
@@ -57,7 +57,7 @@ crate::bench_with_all_pairs! {
         assert_eq!(stored_keys, keys.into_iter().map(DidKey::try_from).map(Result::unwrap).collect::<Vec<_>>());
     }
 
-    remove_keys_sr25519 for sr25519, remove_keys_ed25519 for ed25519, remove_keys_secp256k1 for secp256k1 {
+    remove_keys_sr25519 for sr25519, remove_keys_ed25519 for ed25519 {
         {
             let k in 1 .. MAX_ENTITY_AMOUNT;
         }
@@ -94,7 +94,7 @@ crate::bench_with_all_pairs! {
         assert_eq!(DidKeys::iter_prefix(did).count(), 0);
     }
 
-    add_controllers_sr25519 for sr25519, add_controllers_ed25519 for ed25519, add_controllers_secp256k1 for secp256k1 {
+    add_controllers_sr25519 for sr25519, add_controllers_ed25519 for ed25519 {
         {
             let k in 1 .. MAX_ENTITY_AMOUNT;
         }
@@ -135,7 +135,7 @@ crate::bench_with_all_pairs! {
         assert_eq!(stored_controllers, controllers);
     }
 
-    remove_controllers_sr25519 for sr25519, remove_controllers_ed25519 for ed25519, remove_controllers_secp256k1 for secp256k1 {
+    remove_controllers_sr25519 for sr25519, remove_controllers_ed25519 for ed25519 {
         {
             let k in 1 .. MAX_ENTITY_AMOUNT;
         }
@@ -168,7 +168,7 @@ crate::bench_with_all_pairs! {
         assert_eq!(DidControllers::iter_prefix(did).count(), 0);
     }
 
-    add_service_endpoint_sr25519 for sr25519, add_service_endpoint_ed25519 for ed25519, add_service_endpoint_secp256k1 for secp256k1 {
+    add_service_endpoint_sr25519 for sr25519, add_service_endpoint_ed25519 for ed25519 {
         {
             let o in 1 .. MAX_ORIGINS;
             let l in 1 .. MAX_ORIGIN_LENGTH;
@@ -202,7 +202,7 @@ crate::bench_with_all_pairs! {
         assert_eq!(DidServiceEndpoints::get(did, WrappedBytes(vec![1; i as usize])).unwrap(), add_endpoint.endpoint);
     }
 
-    remove_service_endpoint_sr25519 for sr25519, remove_service_endpoint_ed25519 for ed25519, remove_service_endpoint_secp256k1 for secp256k1 {
+    remove_service_endpoint_sr25519 for sr25519, remove_service_endpoint_ed25519 for ed25519 {
         {
             let i in 1 .. MAX_SERVICE_ENDPOINT_ID_LENGTH;
         }
@@ -242,7 +242,7 @@ crate::bench_with_all_pairs! {
     verify {
        assert!(DidServiceEndpoints::get(did, WrappedBytes(vec![1; i as usize])).is_none());
     }
-    remove_onchain_did_sr25519 for sr25519, remove_onchain_did_ed25519 for ed25519, remove_onchain_did_secp256k1 for secp256k1 {
+    remove_onchain_did_sr25519 for sr25519, remove_onchain_did_ed25519 for ed25519 {
         let pair as Pair;
         let caller = whitelisted_caller();
         let did = Did([3; Did::BYTE_SIZE]);
