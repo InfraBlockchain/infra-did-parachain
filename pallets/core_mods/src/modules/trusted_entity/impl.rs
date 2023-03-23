@@ -26,6 +26,68 @@ impl<T: Config + Debug> Module<T> {
         Ok(())
     }
 
+    pub(super) fn add_policy_controller_(
+        AddPolicyControllerRaw {
+            authorizer_id,
+            controller,
+            ..
+        }: AddPolicyControllerRaw<T>,
+        authorizer: &mut Authorizer,
+    ) -> DispatchResult {
+        // check
+        ensure!(
+            Authorizers::contains_key(&authorizer_id),
+            TrustError::<T>::AuthorizerNotExists
+        );
+        ensure!(
+            T::MaxControllers::get() >= authorizer.policy.len() + controller.len() as u32,
+            TrustError::<T>::TooManyControllers
+        );
+
+        // execute
+        match &mut authorizer.policy {
+            Policy::OneOf(controllers) => {
+                for controller_id in &controller {
+                    if !controllers.contains(controller_id) {
+                        controllers.insert(*controller_id);
+                    }
+                }
+            }
+        }
+
+        deposit_indexed_event!(ControllerAdded(authorizer_id));
+        Ok(())
+    }
+
+    pub(super) fn remove_policy_controller_(
+        RemovePolicyControllerRaw {
+            authorizer_id,
+            controller,
+            ..
+        }: RemovePolicyControllerRaw<T>,
+        authorizer: &mut Authorizer,
+    ) -> DispatchResult {
+        // check
+        ensure!(
+            Authorizers::contains_key(&authorizer_id),
+            TrustError::<T>::AuthorizerNotExists
+        );
+
+        // execute
+        match &mut authorizer.policy {
+            Policy::OneOf(controllers) => {
+                for controller_id in &controller {
+                    if controllers.contains(controller_id) {
+                        controllers.remove(controller_id);
+                    }
+                }
+            }
+        }
+
+        deposit_indexed_event!(ControllerRemoved(authorizer_id));
+        Ok(())
+    }
+
     pub(super) fn add_issuer_(
         AddIssuerRaw {
             authorizer_id,

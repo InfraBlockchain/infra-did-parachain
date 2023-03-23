@@ -136,6 +136,10 @@ decl_event!(
     pub enum Event {
         /// Authorizer with given id created
         AuthorizerAdded(AuthorizerId),
+        /// Controller with given id Added
+        ControllerAdded(AuthorizerId),
+        /// Controller with given id Removed
+        ControllerRemoved(AuthorizerId),
         /// Issuer were added from given authorizer id
         IssuerAdded(AuthorizerId),
         /// Issuer were removed from given authorizer id
@@ -157,6 +161,8 @@ decl_error! {
         NotAuthorized,
         /// A authorizer with that name already exists.
         AuthorizerExists,
+        /// A authorizer with that name already exists.
+        AuthorizerNotExists,
         /// A authorizer with that name does not exist.
         NoAuthorizer,
         /// nonce is incorrect. This is related to replay protection.
@@ -221,6 +227,29 @@ decl_module! {
             Ok(())
         }
 
+        #[weight = 0]
+        pub fn add_policy_controller(
+            origin,
+            controller: dock::trusted_entity::AddPolicyControllerRaw<T>,
+            proof: Vec<DidSigs<T>>,
+        ) -> DispatchResult {
+            ensure_signed(origin)?;
+
+            Self::try_exec_action_over_authorizer(controller, proof, Self::add_policy_controller_)?;
+            Ok(())
+        }
+
+        #[weight = 0]
+        pub fn remove_policy_controller(
+            origin,
+            controller: dock::trusted_entity::RemovePolicyControllerRaw<T>,
+            proof: Vec<DidSigs<T>>,
+        ) -> DispatchResult {
+            ensure_signed(origin)?;
+
+            Self::try_exec_action_over_authorizer(controller, proof, Self::remove_policy_controller_)?;
+            Ok(())
+        }
         /// Create some issuer according to the `entity`` command.
         ///
         /// # Errors

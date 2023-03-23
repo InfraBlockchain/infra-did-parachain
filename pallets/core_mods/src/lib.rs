@@ -41,7 +41,9 @@ def_state_change! {
         trusted_entity::RemoveIssuer,
         trusted_entity::AddVerifier,
         trusted_entity::RemoveVerifier,
-        trusted_entity::RemoveAuthorizer
+        trusted_entity::RemoveAuthorizer,
+        trusted_entity::AddPolicyController,
+        trusted_entity::RemovePolicyController
 }
 
 /// Converts the given entity to the state change.
