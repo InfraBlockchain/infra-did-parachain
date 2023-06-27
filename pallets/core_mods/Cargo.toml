@@ -49,39 +49,39 @@ version = "3.1.5"
 
 [dependencies.sp-core]
 default-features = false
-git = "https://github.com/paritytech/substrate.git"
-branch = "polkadot-v0.9.37"
+git = "https://github.com/InfraBlockchain/infra-substrate.git"
+branch = "master"
 features = ["full_crypto"]
 
 [dependencies.sp-std]
 default-features = false
-git = "https://github.com/paritytech/substrate.git"
-branch = "polkadot-v0.9.37"
+git = "https://github.com/InfraBlockchain/infra-substrate.git"
+branch = "master"
 
 [dependencies.sp-runtime]
 default-features = false
-git = "https://github.com/paritytech/substrate.git"
-branch = "polkadot-v0.9.37"
+git = "https://github.com/InfraBlockchain/infra-substrate.git"
+branch = "master"
 
 [dependencies.sp-io]
 default-features = false
-git = "https://github.com/paritytech/substrate.git"
-branch = "polkadot-v0.9.37"
+git = "https://github.com/InfraBlockchain/infra-substrate.git"
+branch = "master"
 
 [dependencies.frame-system]
 default-features = false
-git = "https://github.com/paritytech/substrate.git"
-branch = "polkadot-v0.9.37"
+git = "https://github.com/InfraBlockchain/infra-substrate.git"
+branch = "master"
 
 [dependencies.frame-support]
 default-features = false
-git = "https://github.com/paritytech/substrate.git"
-branch = "polkadot-v0.9.37"
+git = "https://github.com/InfraBlockchain/infra-substrate.git"
+branch = "master"
 
 [dependencies.sp-api]
 default-features = false
-git = "https://github.com/paritytech/substrate.git"
-branch = "polkadot-v0.9.37"
+git = "https://github.com/InfraBlockchain/infra-substrate.git"
+branch = "master"
 
 [dependencies.hex-literal]
 version = "0.3.1"
@@ -89,16 +89,16 @@ optional = true
 
 [dependencies.sp-application-crypto]
 default-features = false
-git = "https://github.com/paritytech/substrate.git"
-branch = "polkadot-v0.9.37"
+git = "https://github.com/InfraBlockchain/infra-substrate.git"
+branch = "master"
 features = ["full_crypto"]
 
 [dependencies.frame-benchmarking]
 optional = true
 default-features = false
 #version = "3.0.0"
-git = "https://github.com/paritytech/substrate.git"
-branch = "polkadot-v0.9.37"
+git = "https://github.com/InfraBlockchain/infra-substrate.git"
+branch = "master"
 
 [dependencies.sha2]
 version = "0.9"
@@ -135,13 +135,13 @@ rand = "0.8.5"
 
 [dev-dependencies.pallet-balances]
 default-features = false
-git = "https://github.com/paritytech/substrate.git"
-branch = "polkadot-v0.9.37"
+git = "https://github.com/InfraBlockchain/infra-substrate.git"
+branch = "master"
 
 [dev-dependencies.pallet-timestamp]
 default-features = false
-git = "https://github.com/paritytech/substrate.git"
-branch = "polkadot-v0.9.37"
+git = "https://github.com/InfraBlockchain/infra-substrate.git"
+branch = "master"
 
 [features]
 default = ["std"]

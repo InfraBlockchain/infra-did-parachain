@@ -35,12 +35,13 @@ pub use core_mods::{
 };
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
+use pallet_system_token_payment::{HandleCredit, TransactionFeeCharger};
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
-    traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, IdentifyAccount, Verify},
+    traits::{AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, IdentifyAccount, Verify},
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult, MultiSignature,
 };
@@ -54,7 +55,10 @@ use frame_support::{
     construct_runtime,
     dispatch::DispatchClass,
     parameter_types,
-    traits::{ConstU32, ConstU64, ConstU8, Everything},
+    traits::{
+        fungibles::{Balanced, CreditOf},
+        AsEnsureOriginWithArg, ConstU128, ConstU32, ConstU64, ConstU8, Everything,
+    },
     weights::{
         constants::WEIGHT_REF_TIME_PER_SECOND, ConstantMultiplier, Weight, WeightToFeeCoefficient,
         WeightToFeeCoefficients, WeightToFeePolynomial,
@@ -66,14 +70,13 @@ use frame_system::{
     EnsureRoot,
 };
 pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+#[cfg(any(feature = "std", test))]
+pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{MultiAddress, Perbill, Permill};
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
-#[cfg(any(feature = "std", test))]
-pub use sp_runtime::BuildStorage;
-
 // Polkadot imports
-use polkadot_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
+use infrablockspace_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
 
 use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
 
@@ -116,6 +119,9 @@ pub type SignedBlock = generic::SignedBlock<Block>;
 
 /// BlockId type as expected by this runtime.
 pub type BlockId = generic::BlockId<Block>;
+
+/// AssetId type as expected by this runtime.
+pub type AssetId = u32;
 
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
@@ -244,7 +250,7 @@ const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 /// We allow for 0.5 of a second of compute with a 12 second average block time.
 const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
     WEIGHT_REF_TIME_PER_SECOND.saturating_div(2),
-    cumulus_primitives_core::relay_chain::v2::MAX_POV_SIZE as u64,
+    cumulus_primitives_core::relay_chain::MAX_POV_SIZE as u64,
 );
 
 /// The version information used to identify this runtime when compiled natively.
@@ -353,8 +359,6 @@ impl pallet_timestamp::Config for Runtime {
 
 impl pallet_authorship::Config for Runtime {
     type FindAuthor = pallet_session::FindAccountFromAuthorIndex<Self, Aura>;
-    type UncleGenerations = ConstU32<0>;
-    type FilterUncle = ();
     type EventHandler = (CollatorSelection,);
 }
 
@@ -379,6 +383,55 @@ impl pallet_balances::Config for Runtime {
 parameter_types! {
     /// Relay Chain `TransactionByteFee` / 10
     pub const TransactionByteFee: Balance = 10 * MICROUNIT;
+}
+
+impl pallet_assets::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Balance = Balance;
+    type AssetId = AssetId;
+    type AssetIdParameter = codec::Compact<AssetId>;
+    type Currency = Balances;
+    type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
+    type ForceOrigin = EnsureRoot<AccountId>;
+    type AssetDeposit = ConstU128<2>;
+    type AssetAccountDeposit = ConstU128<2>;
+    type MetadataDepositBase = ConstU128<0>;
+    type MetadataDepositPerByte = ConstU128<0>;
+    type ApprovalDeposit = ConstU128<0>;
+    type StringLimit = ConstU32<20>;
+    type Freezer = ();
+    type Extra = ();
+    type CallbackHandle = ();
+    type WeightInfo = ();
+    type RemoveItemsLimit = ConstU32<1000>;
+}
+
+pub struct CreditToBlockAuthor;
+impl HandleCredit<AccountId, Assets> for CreditToBlockAuthor {
+    fn handle_credit(credit: CreditOf<AccountId, Assets>) {
+        if let Some(author) = pallet_authorship::Pallet::<Runtime>::author() {
+            // What to do in case paying the author fails (e.g. because `fee < min_balance`)
+            // default: drop the result which will trigger the `OnDrop` of the imbalance.
+            let _ = <Assets as Balanced<AccountId>>::resolve(&author, credit);
+        }
+    }
+}
+
+parameter_types! {
+    pub const FeeTreasuryId: PalletId = PalletId(*b"infrapid");
+}
+
+impl pallet_system_token_payment::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Assets = Assets;
+    /// The actual transaction charging logic that charges the fees.
+    type OnChargeSystemToken = TransactionFeeCharger<
+        pallet_assets::BalanceToAssetBalance<Balances, Runtime, ConvertInto>,
+        CreditToBlockAuthor,
+    >;
+    /// The type that handles the voting info.
+    type VotingHandler = ParachainSystem;
+    type PalletId = FeeTreasuryId;
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -407,8 +460,6 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
     type CheckAssociatedRelayNumber = RelayNumberStrictlyIncreases;
 }
 
-impl pallet_randomness_collective_flip::Config for Runtime {}
-
 impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
@@ -422,6 +473,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
     type ControllerOrigin = EnsureRoot<AccountId>;
     type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
     type WeightInfo = ();
+    type PriceForSiblingDelivery = ();
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
@@ -480,6 +532,13 @@ impl pallet_collator_selection::Config for Runtime {
     type ValidatorId = <Self as frame_system::Config>::AccountId;
     type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
     type ValidatorRegistration = Session;
+    type WeightInfo = ();
+}
+
+impl pallet_asset_registry::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type ReserveAssetModifierOrigin = EnsureRoot<AccountId>;
+    type Assets = Assets;
     type WeightInfo = ();
 }
 
@@ -577,16 +636,16 @@ construct_runtime!(
         ParachainSystem: cumulus_pallet_parachain_system::{
             Pallet, Call, Config, Storage, Inherent, Event<T>, ValidateUnsigned,
         } = 1,
-        RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 2,
         Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 3,
         ParachainInfo: parachain_info::{Pallet, Storage, Config} = 4,
 
         // Monetary stuff.
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
         TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 11,
+        InfraAssetTxPayment: pallet_system_token_payment::{Pallet, Event<T>} = 12,
 
         // Collator support. The order of these 4 are important and shall not change.
-        Authorship: pallet_authorship::{Pallet, Call, Storage} = 20,
+        Authorship: pallet_authorship::{Pallet, Storage} = 20,
         CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
         Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 22,
         Aura: pallet_aura::{Pallet, Storage, Config<T>} = 23,
@@ -594,7 +653,7 @@ construct_runtime!(
 
         // XCM helpers.
         XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
-        PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config} = 31,
+        InfrablockspaceXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin, Config} = 31,
         CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
         DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 33,
 
@@ -607,6 +666,9 @@ construct_runtime!(
         Attest: attest::{Pallet, Call, Storage} = 56,
         Accumulator: accumulator::{Pallet, Call, Storage, Event} = 57,
         TrustedEntity: trusted_entity::{Pallet, Call, Storage, Event} = 58,
+
+        Assets: pallet_assets::{Pallet, Call, Storage, Event<T>, Config<T>} = 59,
+        AssetRegistry: pallet_asset_registry = 60,
 
         Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 100,
     }
@@ -625,6 +687,14 @@ mod benches {
         [pallet_timestamp, Timestamp]
         [pallet_collator_selection, CollatorSelection]
         [cumulus_pallet_xcmp_queue, XcmpQueue]
+        [bbs_plus, BbsPlus]
+        [did, DIDModule]
+        [revoke, Revoke]
+        [blob, BlobStore]
+        [anchor, Anchor]
+        [attest, Attest]
+        [accumulator, Accumulator]
+        [trusted_entity, TrustedEntity]
     );
 }
 
@@ -727,6 +797,12 @@ impl_runtime_apis! {
         ) -> pallet_transaction_payment::FeeDetails<Balance> {
             TransactionPayment::query_fee_details(uxt, len)
         }
+        fn query_weight_to_fee(weight: Weight) -> Balance {
+            TransactionPayment::weight_to_fee(weight)
+        }
+        fn query_length_to_fee(length: u32) -> Balance {
+            TransactionPayment::length_to_fee(length)
+        }
     }
 
     impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentCallApi<Block, Balance, RuntimeCall>
@@ -743,6 +819,12 @@ impl_runtime_apis! {
             len: u32,
         ) -> pallet_transaction_payment::FeeDetails<Balance> {
             TransactionPayment::query_call_fee_details(call, len)
+        }
+        fn query_weight_to_fee(weight: Weight) -> Balance {
+            TransactionPayment::weight_to_fee(weight)
+        }
+        fn query_length_to_fee(length: u32) -> Balance {
+            TransactionPayment::length_to_fee(length)
         }
     }
 
