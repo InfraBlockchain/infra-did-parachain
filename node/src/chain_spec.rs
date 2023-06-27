@@ -244,6 +244,21 @@ fn testnet_genesis(
                 .map(|k| (k, 1 << 60))
                 .collect(),
         },
+        assets: infra_did_runtime::AssetsConfig {
+            assets: vec![(
+                99,                                                   // asset_id
+                get_account_id_from_seed::<sr25519::Public>("Alice"), // owner
+                true,                                                 // is_sufficient
+                1000,                                                 // min_balance
+            )],
+            metadata: vec![(99, "iTEST".into(), "iTEST".into(), 12)],
+            accounts: vec![(
+                99,
+                get_account_id_from_seed::<sr25519::Public>("Alice"),
+                1_000_000_000_000, // endow only 1 iTest for test
+            )],
+            ..Default::default()
+        },
         parachain_info: infra_did_runtime::ParachainInfoConfig { parachain_id: id },
         collator_selection: infra_did_runtime::CollatorSelectionConfig {
             invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
@@ -267,7 +282,7 @@ fn testnet_genesis(
         aura: Default::default(),
         aura_ext: Default::default(),
         parachain_system: Default::default(),
-        polkadot_xcm: infra_did_runtime::PolkadotXcmConfig {
+        infrablockspace_xcm: infra_did_runtime::InfrablockspaceXcmConfig {
             safe_xcm_version: Some(SAFE_XCM_VERSION),
         },
         sudo: infra_did_runtime::SudoConfig {
