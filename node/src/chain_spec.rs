@@ -141,7 +141,7 @@ pub fn development_config() -> ChainSpec {
         None,
         None,
         Extensions {
-            relay_chain: "".into(), // You MUST set this to the correct network!
+            relay_chain: "infrablockspace-local".into(), // You MUST set this to the correct network!
             para_id: INFRA_DID_PARACHAIN_ID,
         },
     )
@@ -219,7 +219,7 @@ pub fn local_testnet_config() -> ChainSpec {
         Some(properties),
         // Extensions
         Extensions {
-            relay_chain: "".into(), // You MUST set this to the correct network!
+            relay_chain: "infrablockspace-local".into(), // You MUST set this to the correct network!
             para_id: INFRA_DID_PARACHAIN_ID,
         },
     )
