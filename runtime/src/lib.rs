@@ -132,6 +132,7 @@ pub type SignedExtra = (
     frame_system::CheckEra<Runtime>,
     frame_system::CheckNonce<Runtime>,
     frame_system::CheckWeight<Runtime>,
+    pallet_system_token_payment::ChargeSystemToken<Runtime>,
 );
 
 pub type SignedPayload = generic::SignedPayload<RuntimeCall, SignedExtra>;
