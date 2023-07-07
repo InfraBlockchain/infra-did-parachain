@@ -16,10 +16,12 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 ENV PATH /root/.cargo/bin:$PATH
 
 # setup rust nightly channel, pinning specific version as newer versions have a regression
-RUN rustup install nightly
+RUN rustup install nightly-2023-02-20
+
+RUN rustup default nightly-2023-02-20
 
 # install wasm toolchain for substrate
-RUN rustup target add wasm32-unknown-unknown --toolchain nightly
+RUN rustup target add wasm32-unknown-unknown --toolchain nightly-2023-02-20
 
 #compiler ENV
 ENV CC clang
@@ -29,19 +31,9 @@ ENV CXX g++
 # explicitly. This lets us cache build results while iterating on scripts.
 COPY . .
 
-# Pass the features while building image as `--build-arg features='--features mainnet'` or `--build-arg features='--features testnet'`
-ARG features
-ARG release
-
-RUN if [ "$release" = "Y" ] ; then \
-      echo 'Building in release mode.' ; \
-      WASM_BUILD_TOOLCHAIN=nightly cargo build --profile=release $features ; \
-      mv /infra-did-substrate/target/release/infradid /infra-did-substrate/target/; \
-    else \
-      echo 'Building in production mode.' ; \
-      WASM_BUILD_TOOLCHAIN=nightly cargo build --profile=production $features ; \
-      mv /infra-did-substrate/target/production/infradid /infra-did-substrate/target/; \
-    fi
+RUN echo 'Building in release mode.' ; \
+    cargo build --release ; \
+    mv /infra-did-substrate/target/release/infradid /infra-did-substrate/target/; 
 
 # Final stage. Copy the node executable and the script
 FROM ubuntu:jammy
