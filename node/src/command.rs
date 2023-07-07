@@ -22,8 +22,10 @@ use crate::{
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
     Ok(match id {
-        "dev" => Box::new(chain_spec::development_config()),
-        "" | "local" => Box::new(chain_spec::local_testnet_config()),
+        "" | "dev" | "infra-did-substrate-dev" => Box::new(chain_spec::development_config()),
+        "infra-did-substrate-local" => Box::new(chain_spec::local_testnet_config()),
+        "infra-did-substrate-genesis" => Box::new(chain_spec::mainnet_config()),
+        "infra-did-substrate" => Box::new(chain_spec::mainnet_config()),
         path => Box::new(chain_spec::ChainSpec::from_json_file(
             std::path::PathBuf::from(path),
         )?),
@@ -58,7 +60,7 @@ impl SubstrateCli for Cli {
     }
 
     fn copyright_start_year() -> i32 {
-        2020
+        2023
     }
 
     fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
