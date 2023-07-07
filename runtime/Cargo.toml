@@ -28,7 +28,7 @@ frame-system = { git = "https://github.com/InfraBlockchain/infra-substrate", def
 frame-system-benchmarking = { git = "https://github.com/InfraBlockchain/infra-substrate", default-features = false, optional = true, branch = "master" }
 frame-system-rpc-runtime-api = { git = "https://github.com/InfraBlockchain/infra-substrate", default-features = false, branch = "master" }
 frame-try-runtime = { git = "https://github.com/InfraBlockchain/infra-substrate", default-features = false, optional = true, branch = "master" }
-pallet-asset-registry = { package = "pallet-asset-registry", git = "https://github.com/InfraBlockchain/infra-trappist", branch = "dev", default-features = false }
+pallet-asset-link = { package = "pallet-asset-link", git = "https://github.com/InfraBlockchain/infra-relay-chain", branch = "master", default-features = false }
 pallet-assets = { git = "https://github.com/InfraBlockchain/infra-substrate", default-features = false, branch = "master" }
 pallet-aura = { git = "https://github.com/InfraBlockchain/infra-substrate", default-features = false, branch = "master" }
 pallet-authorship = { git = "https://github.com/InfraBlockchain/infra-substrate", default-features = false, branch = "master" }
@@ -55,12 +55,14 @@ sp-version = { git = "https://github.com/InfraBlockchain/infra-substrate", defau
 pallet-xcm = { git = "https://github.com/InfraBlockchain/infra-relay-chain", default-features = false, branch = "master" }
 infrablockspace-parachain = { git = "https://github.com/InfraBlockchain/infra-relay-chain", default-features = false, branch = "master" }
 infrablockspace-runtime-common = { git = "https://github.com/InfraBlockchain/infra-relay-chain", default-features = false, branch = "master" }
+infrablockspace-runtime-parachains = { git = "https://github.com/InfraBlockchain/infra-relay-chain", default-features = false, branch = "master" }
 xcm = { git = "https://github.com/InfraBlockchain/infra-relay-chain", default-features = false, branch = "master" }
 xcm-builder = { git = "https://github.com/InfraBlockchain/infra-relay-chain", default-features = false, branch = "master" }
 xcm-executor = { git = "https://github.com/InfraBlockchain/infra-relay-chain", default-features = false, branch = "master" }
-xcm-primitives = { package = "xcm-primitives", git = "https://github.com/InfraBlockchain/infra-trappist", branch = "dev", default-features = false }
+xcm-primitives = { package = "xcm-primitives", git = "https://github.com/InfraBlockchain/infra-relay-chain", branch = "master", default-features = false }
 
 # Cumulus
+assets-common = { git = "https://github.com/InfraBlockchain/infra-cumulus", branch = "master", default-features = false }
 cumulus-pallet-aura-ext = { git = "https://github.com/InfraBlockchain/infra-cumulus", branch = "master", default-features = false }
 cumulus-pallet-dmp-queue = { git = "https://github.com/InfraBlockchain/infra-cumulus", branch = "master", default-features = false }
 cumulus-pallet-parachain-system = { git = "https://github.com/InfraBlockchain/infra-cumulus", branch = "master", default-features = false }
@@ -85,6 +87,7 @@ std = [
 	"codec/std",
 	"log/std",
 	"scale-info/std",
+	"assets-common/std",
 	"cumulus-pallet-aura-ext/std",
 	"cumulus-pallet-dmp-queue/std",
 	"cumulus-pallet-parachain-system/std",
@@ -97,7 +100,7 @@ std = [
 	"frame-support/std",
 	"frame-system-rpc-runtime-api/std",
 	"frame-system/std",
-	"pallet-asset-registry/std",
+	"pallet-asset-link/std",
 	"pallet-assets/std",
 	"pallet-system-token-payment/std",
 	"pallet-aura/std",
@@ -114,6 +117,7 @@ std = [
 	"parachains-common/std",
 	"infrablockspace-parachain/std",
 	"infrablockspace-runtime-common/std",
+	"infrablockspace-runtime-parachains/std",
 	"sp-api/std",
 	"sp-block-builder/std",
 	"sp-consensus-aura/std",

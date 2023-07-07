@@ -35,7 +35,7 @@ pub use core_mods::{
 };
 
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
-use pallet_system_token_payment::{HandleCredit, TransactionFeeCharger};
+use pallet_system_token_payment::{CreditToBucket, TransactionFeeCharger};
 use smallvec::smallvec;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -80,6 +80,7 @@ use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
 
 // Polkadot imports
 use infrablockspace_runtime_common::{BlockHashCount, SlowAdjustingFeeUpdate};
+use infrablockspace_runtime_parachains::system_token_aggregator;
 
 use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
 
@@ -393,6 +394,7 @@ impl pallet_assets::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type Balance = Balance;
     type AssetId = AssetId;
+    type AssetLink = AssetLink;
     type AssetIdParameter = codec::Compact<AssetId>;
     type Currency = Balances;
     type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
@@ -410,14 +412,6 @@ impl pallet_assets::Config for Runtime {
     type RemoveItemsLimit = ConstU32<1000>;
 }
 
-pub struct CreditToBucket;
-impl HandleCredit<AccountId, Assets> for CreditToBucket {
-    fn handle_credit(credit: CreditOf<AccountId, Assets>) {
-        let dest = FeeTreasuryId::get().into_account_truncating();
-        let _ = <Assets as Balanced<AccountId>>::resolve(&dest, credit);
-    }
-}
-
 parameter_types! {
     pub const FeeTreasuryId: PalletId = PalletId(*b"infrapid");
 }
@@ -428,7 +422,7 @@ impl pallet_system_token_payment::Config for Runtime {
     /// The actual transaction charging logic that charges the fees.
     type OnChargeSystemToken = TransactionFeeCharger<
         pallet_assets::BalanceToAssetBalance<Balances, Runtime, ConvertInto>,
-        CreditToBucket,
+        CreditToBucket<Runtime>,
     >;
     /// The type that handles the voting info.
     type VotingHandler = ParachainSystem;
@@ -536,13 +530,6 @@ impl pallet_collator_selection::Config for Runtime {
     type WeightInfo = ();
 }
 
-impl pallet_asset_registry::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type ReserveAssetModifierOrigin = EnsureRoot<AccountId>;
-    type Assets = Assets;
-    type WeightInfo = ();
-}
-
 parameter_types! {
     // 8KB
     pub const MaxBlobSize: u32 = 8192;
@@ -625,6 +612,18 @@ impl trusted_entity::Config for Runtime {
     type MaxControllers = MaxControllers;
 }
 
+impl pallet_asset_link::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type ReserveAssetModifierOrigin = EnsureRoot<AccountId>;
+    type Assets = Assets;
+    type WeightInfo = ();
+}
+
+impl system_token_aggregator::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Assets = Assets;
+    type AssetMultiLocationGetter = AssetLink;
+}
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub enum Runtime where
@@ -669,7 +668,8 @@ construct_runtime!(
         TrustedEntity: trusted_entity::{Pallet, Call, Storage, Event} = 58,
 
         Assets: pallet_assets::{Pallet, Call, Storage, Event<T>, Config<T>} = 59,
-        AssetRegistry: pallet_asset_registry = 60,
+        AssetLink: pallet_asset_link = 60,
+        SystemTokenAggregator: system_token_aggregator = 61,
 
         Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 100,
     }
