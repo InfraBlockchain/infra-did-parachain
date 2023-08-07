@@ -424,6 +424,7 @@ impl pallet_system_token_payment::Config for Runtime {
         pallet_assets::BalanceToAssetBalance<Balances, Runtime, ConvertInto>,
         CreditToBucket<Runtime>,
     >;
+    type FeeTableProvider = SystemToken;
     /// The type that handles the voting info.
     type VotingHandler = ParachainSystem;
     type PalletId = FeeTreasuryId;
@@ -619,11 +620,21 @@ impl pallet_asset_link::Config for Runtime {
     type WeightInfo = ();
 }
 
+parameter_types! {
+    pub const BlockPeriod: BlockNumber = 10;
+}
+
 impl system_token_aggregator::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
-    type Assets = Assets;
+    type Period = BlockPeriod;
     type AssetMultiLocationGetter = AssetLink;
 }
+
+impl pallet_system_token::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type AuthorizedOrigin = EnsureRoot<AccountId>;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
     pub enum Runtime where
@@ -670,6 +681,7 @@ construct_runtime!(
         Assets: pallet_assets::{Pallet, Call, Storage, Event<T>, Config<T>} = 59,
         AssetLink: pallet_asset_link = 60,
         SystemTokenAggregator: system_token_aggregator = 61,
+        SystemToken: pallet_system_token = 62,
 
         Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 100,
     }
