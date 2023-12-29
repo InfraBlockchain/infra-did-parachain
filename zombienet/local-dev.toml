@@ -1,6 +1,6 @@
 [relaychain]
-default_command = "../infra-relay-chain/target/release/infrablockspace"
-chain = "infrablockspace-local"
+default_command = "../infrablockchain-substrate/target/release/infra-relaychain"
+chain = "infra-relay-local"
 
   [[relaychain.nodes]]
   name = "alice"
@@ -11,7 +11,7 @@ chain = "infrablockspace-local"
   validator = true
 
 [[parachains]]
-id = 1337
+id = 1000
 chain = "local"
 cumulus_based = true
 
@@ -19,5 +19,5 @@ cumulus_based = true
 	[[parachains.collators]]
 	name = "alice"
 	validator = true
-	command = "./target/release/infradid"
+	command = "./target/release/infra-did-parachain"
 	args = ["-lparachain=debug", "--alice"]

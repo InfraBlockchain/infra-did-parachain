@@ -1,8 +1,28 @@
+// Copyright (C) Parity Technologies (UK) Ltd.
+// This file is part of Cumulus.
+
+// Cumulus is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Cumulus is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
+
 use std::path::PathBuf;
 
 /// Sub-commands supported by the collator.
 #[derive(Debug, clap::Subcommand)]
 pub enum Subcommand {
+    /// Key management CLI utilities
+    #[command(subcommand)]
+    Key(sc_cli::KeySubcommand),
+
     /// Build a chain specification.
     BuildSpec(sc_cli::BuildSpecCmd),
 
@@ -35,21 +55,28 @@ pub enum Subcommand {
     #[command(subcommand)]
     Benchmark(frame_benchmarking_cli::BenchmarkCmd),
 
-    /// Try some testing command against a specified runtime state.
-    #[cfg(feature = "try-runtime")]
-    TryRuntime(try_runtime_cli::TryRuntimeCmd),
-
-    /// Errors since the binary was not build with `--features try-runtime`.
-    #[cfg(not(feature = "try-runtime"))]
+    /// Try-runtime has migrated to a standalone
+    /// [CLI](<https://github.com/paritytech/try-runtime-cli>). The subcommand exists as a stub and
+    /// deprecation notice. It will be removed entirely some time after January 2024.
     TryRuntime,
 }
 
+const AFTER_HELP_EXAMPLE: &str = color_print::cstr!(
+    r#"<bold><underline>Examples:</></>
+   <bold>infra-did-parachain --chain did-hub-infra --sync warp -- --chain infra-relay --sync warp</>
+           Launch a warp-syncing full node of the <italic>Asset Hub</> parachain on the <italic>InfraBlockchain</> Relay Chain.
+   <bold>infra-did-parachain --chain did-hub-infra --sync warp --relay-chain-rpc-url ws://rpc.example.com -- --chain infra-relay</>
+           Launch a warp-syncing full node of the <italic>Asset Hub</> parachain on the <italic>InfraBlockchain</> Relay Chain.
+           Uses <italic>ws://rpc.example.com</> as remote relay chain node.
+ "#
+);
 #[derive(Debug, clap::Parser)]
 #[command(
     propagate_version = true,
     args_conflicts_with_subcommands = true,
     subcommand_negates_reqs = true
 )]
+#[clap(after_help = AFTER_HELP_EXAMPLE)]
 pub struct Cli {
     #[command(subcommand)]
     pub subcommand: Option<Subcommand>,
@@ -69,13 +96,13 @@ pub struct Cli {
 
     /// Relay chain arguments
     #[arg(raw = true)]
-    pub relay_chain_args: Vec<String>,
+    pub relaychain_args: Vec<String>,
 }
 
 #[derive(Debug)]
 pub struct RelayChainCli {
     /// The actual relay chain cli object.
-    pub base: infrablockspace_cli::RunCmd,
+    pub base: infrablockchain_cli::RunCmd,
 
     /// Optional chain id that should be passed to the relay chain.
     pub chain_id: Option<String>,
@@ -92,12 +119,9 @@ impl RelayChainCli {
     ) -> Self {
         let extension = crate::chain_spec::Extensions::try_get(&*para_config.chain_spec);
         let chain_id = extension.map(|e| e.relay_chain.clone());
-        let base_path = para_config
-            .base_path
-            .as_ref()
-            .map(|x| x.path().join("polkadot"));
+        let base_path = para_config.base_path.path().join("polkadot");
         Self {
-            base_path,
+            base_path: Some(base_path),
             chain_id,
             base: clap::Parser::parse_from(relay_chain_args),
         }

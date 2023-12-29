@@ -1,31 +1,42 @@
-use std::net::SocketAddr;
+// Copyright (C) Parity Technologies (UK) Ltd.
+// This file is part of Cumulus.
 
-use codec::Encode;
-use cumulus_client_cli::generate_genesis_block;
-use cumulus_primitives_core::ParaId;
-use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
-use infra_did_runtime::Block;
-use log::{info, warn};
-use sc_cli::{
-    ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
-    NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
-};
-use sc_service::config::{BasePath, PrometheusConfig};
-use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
+// Cumulus is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Cumulus is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{
     chain_spec,
     cli::{Cli, RelayChainCli, Subcommand},
-    service::{new_partial, ParachainNativeExecutor},
+    service::{new_partial, Block},
 };
+use cumulus_primitives_core::ParaId;
+use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
+use log::info;
+use parachains_common::types::AuraId;
+use sc_cli::{
+    ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
+    NetworkParams, Result, SharedParams, SubstrateCli,
+};
+use sc_service::config::{BasePath, PrometheusConfig};
+use sp_runtime::traits::AccountIdConversion;
+use std::net::SocketAddr;
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
     Ok(match id {
-        "" | "dev" | "infra-did-substrate-dev" => Box::new(chain_spec::development_config()),
-        "infra-did-substrate-local" => Box::new(chain_spec::local_testnet_config()),
-        "infra-did-substrate-genesis" => Box::new(chain_spec::mainnet_config()),
-        "infra-did-substrate" => Box::new(chain_spec::mainnet_config()),
+        "did-hub-infra-dev" | "dev" | "" => Box::new(chain_spec::development_config()),
+        "did-hub-infra-local" => Box::new(chain_spec::local_config()),
+        "did-hub-infra" => Box::new(chain_spec::mainnet_config()),
+        // -- Loading a specific spec from disk
         path => Box::new(chain_spec::ChainSpec::from_json_file(
             std::path::PathBuf::from(path),
         )?),
@@ -34,7 +45,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
-        "Infra DID Node".into()
+        "InfraBlockchain DID Parachain".into()
     }
 
     fn impl_version() -> String {
@@ -43,10 +54,10 @@ impl SubstrateCli for Cli {
 
     fn description() -> String {
         format!(
-            "Infra DID Parachain Node\n\nThe command-line arguments provided first will be \
+            "InfraBlockchain DID Parachain\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
-		to the relay chain node.\n\n\
-		{} <parachain-args> -- <relay-chain-args>",
+		to the relaychain node.\n\n\
+		{} [parachain-args] -- [relaychain-args]",
             Self::executable_name()
         )
     }
@@ -56,25 +67,21 @@ impl SubstrateCli for Cli {
     }
 
     fn support_url() -> String {
-        "https://github.com/InfraBlockchain/infra-did-substrate".into()
+        "https://github.com/InfraBlockchain/infra-did-parachain/issues/new".into()
     }
 
     fn copyright_start_year() -> i32 {
         2023
     }
 
-    fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
+    fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
         load_spec(id)
-    }
-
-    fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-        &infra_did_runtime::VERSION
     }
 }
 
 impl SubstrateCli for RelayChainCli {
     fn impl_name() -> String {
-        "Infra DID Node".into()
+        "InfraBlockchain DID Parachain".into()
     }
 
     fn impl_version() -> String {
@@ -83,10 +90,10 @@ impl SubstrateCli for RelayChainCli {
 
     fn description() -> String {
         format!(
-            "Infra DID Parachain Node\n\nThe command-line arguments provided first will be \
+            "InfraBlockchain DID Parachain\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relay chain node.\n\n\
-		{} <parachain-args> -- <relay-chain-args>",
+		{} [parachain-args] -- [relay_chain-args]",
             Self::executable_name()
         )
     }
@@ -96,27 +103,40 @@ impl SubstrateCli for RelayChainCli {
     }
 
     fn support_url() -> String {
-        "https://github.com/InfraBlockchain/infra-did-substrate".into()
+        "https://github.com/InfraBlockchain/infra-did-parachain/issues/new".into()
     }
 
     fn copyright_start_year() -> i32 {
         2023
     }
 
-    fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
-        infrablockspace_cli::Cli::from_iter([RelayChainCli::executable_name()].iter()).load_spec(id)
+    fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
+        infrablockchain_cli::Cli::from_iter([RelayChainCli::executable_name()].iter()).load_spec(id)
     }
+}
 
-    fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-        infrablockspace_cli::Cli::native_runtime_version(chain_spec)
-    }
+macro_rules! construct_partials {
+    ($config:expr, |$partials:ident| $code:expr) => {
+        match $config.chain_spec {
+            _ => {
+                let $partials = new_partial::<infra_did_parachain_runtime::RuntimeApi, _>(
+                    &$config,
+                    crate::service::aura_build_import_queue::<_, AuraId>,
+                )?;
+                $code
+            }
+        }
+    };
 }
 
 macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
 		runner.async_run(|$config| {
-			let $components = new_partial(&$config)?;
+			let $components = new_partial::<infra_did_parachain_runtime::RuntimeApi, _>(
+				&$config,
+				crate::service::aura_build_import_queue::<_, AuraId>,
+			)?;
 			let task_manager = $components.task_manager;
 			{ $( $code )* }.map(|v| (v, task_manager))
 		})
@@ -128,204 +148,152 @@ pub fn run() -> Result<()> {
     let cli = Cli::from_args();
 
     match &cli.subcommand {
-        Some(Subcommand::BuildSpec(cmd)) => {
-            let runner = cli.create_runner(cmd)?;
-            runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
-        }
-        Some(Subcommand::CheckBlock(cmd)) => {
-            construct_async_run!(|components, cli, cmd, config| {
-                Ok(cmd.run(components.client, components.import_queue))
-            })
-        }
-        Some(Subcommand::ExportBlocks(cmd)) => {
-            construct_async_run!(|components, cli, cmd, config| {
-                Ok(cmd.run(components.client, config.database))
-            })
-        }
-        Some(Subcommand::ExportState(cmd)) => {
-            construct_async_run!(|components, cli, cmd, config| {
-                Ok(cmd.run(components.client, config.chain_spec))
-            })
-        }
-        Some(Subcommand::ImportBlocks(cmd)) => {
-            construct_async_run!(|components, cli, cmd, config| {
-                Ok(cmd.run(components.client, components.import_queue))
-            })
-        }
-        Some(Subcommand::Revert(cmd)) => {
-            construct_async_run!(|components, cli, cmd, config| {
-                Ok(cmd.run(components.client, components.backend, None))
-            })
-        }
-        Some(Subcommand::PurgeChain(cmd)) => {
-            let runner = cli.create_runner(cmd)?;
+		Some(Subcommand::BuildSpec(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
+		},
+		Some(Subcommand::CheckBlock(cmd)) => {
+			construct_async_run!(|components, cli, cmd, config| {
+				Ok(cmd.run(components.client, components.import_queue))
+			})
+		},
+		Some(Subcommand::ExportBlocks(cmd)) => {
+			construct_async_run!(|components, cli, cmd, config| {
+				Ok(cmd.run(components.client, config.database))
+			})
+		},
+		Some(Subcommand::ExportState(cmd)) => {
+			construct_async_run!(|components, cli, cmd, config| {
+				Ok(cmd.run(components.client, config.chain_spec))
+			})
+		},
+		Some(Subcommand::ImportBlocks(cmd)) => {
+			construct_async_run!(|components, cli, cmd, config| {
+				Ok(cmd.run(components.client, components.import_queue))
+			})
+		},
+		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| {
+			Ok(cmd.run(components.client, components.backend, None))
+		}),
+		Some(Subcommand::PurgeChain(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
 
-            runner.sync_run(|config| {
-                let infrablockspace_cli = RelayChainCli::new(
-                    &config,
-                    [RelayChainCli::executable_name()]
-                        .iter()
-                        .chain(cli.relay_chain_args.iter()),
-                );
+			runner.sync_run(|config| {
+				let infra_relay_cli = RelayChainCli::new(
+					&config,
+					[RelayChainCli::executable_name()].iter().chain(cli.relaychain_args.iter()),
+				);
 
-                let infrablockspace_config = SubstrateCli::create_configuration(
-                    &infrablockspace_cli,
-                    &infrablockspace_cli,
-                    config.tokio_handle.clone(),
-                )
-                .map_err(|err| format!("Relay chain argument error: {}", err))?;
+				let infra_relay_config = SubstrateCli::create_configuration(
+					&infra_relay_cli,
+					&infra_relay_cli,
+					config.tokio_handle.clone(),
+				)
+				.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
-                cmd.run(config, infrablockspace_config)
-            })
-        }
-        Some(Subcommand::ExportGenesisState(cmd)) => {
-            let runner = cli.create_runner(cmd)?;
-            runner.sync_run(|_config| {
-                let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
-                let state_version = Cli::native_runtime_version(&spec).state_version();
-                cmd.run::<Block>(&*spec, state_version)
-            })
-        }
-        Some(Subcommand::ExportGenesisWasm(cmd)) => {
-            let runner = cli.create_runner(cmd)?;
-            runner.sync_run(|_config| {
-                let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
-                cmd.run(&*spec)
-            })
-        }
-        Some(Subcommand::Benchmark(cmd)) => {
-            let runner = cli.create_runner(cmd)?;
-            // Switch on the concrete benchmark sub-command-
-            match cmd {
-                BenchmarkCmd::Pallet(cmd) => {
-                    if cfg!(feature = "runtime-benchmarks") {
-                        runner.sync_run(|config| cmd.run::<Block, ParachainNativeExecutor>(config))
-                    } else {
-                        Err("Benchmarking wasn't enabled when building the node. \
-					You can enable it with `--features runtime-benchmarks`."
-                            .into())
-                    }
-                }
-                BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
-                    let partials = new_partial(&config)?;
-                    cmd.run(partials.client)
-                }),
-                #[cfg(not(feature = "runtime-benchmarks"))]
-                BenchmarkCmd::Storage(_) => {
-                    return Err(sc_cli::Error::Input(
-                        "Compile with --features=runtime-benchmarks \
+				cmd.run(config, infra_relay_config)
+			})
+		},
+		Some(Subcommand::ExportGenesisState(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|config| {
+				construct_partials!(config, |partials| cmd.run(&*config.chain_spec, &*partials.client))
+			})
+		},
+		Some(Subcommand::ExportGenesisWasm(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|_config| {
+				let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
+				cmd.run(&*spec)
+			})
+		},
+		Some(Subcommand::Benchmark(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+
+			// Switch on the concrete benchmark sub-command-
+			match cmd {
+				BenchmarkCmd::Pallet(cmd) =>
+					if cfg!(feature = "runtime-benchmarks") {
+						runner.sync_run(|config| cmd.run::<Block, ()>(config))
+					} else {
+						Err("Benchmarking wasn't enabled when building the node. \
+				You can enable it with `--features runtime-benchmarks`."
+							.into())
+					},
+					BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
+						construct_partials!(config, |partials| cmd.run(partials.client))
+					}),
+					#[cfg(not(feature = "runtime-benchmarks"))]
+					BenchmarkCmd::Storage(_) =>
+					return Err(sc_cli::Error::Input(
+						"Compile with --features=runtime-benchmarks \
 						to enable storage benchmarks."
-                            .into(),
-                    )
-                    .into())
-                }
-                #[cfg(feature = "runtime-benchmarks")]
-                BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
-                    let partials = new_partial(&config)?;
-                    let db = partials.backend.expose_db();
-                    let storage = partials.backend.expose_storage();
-                    cmd.run(config, partials.client.clone(), db, storage)
-                }),
-                BenchmarkCmd::Machine(cmd) => {
-                    runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone()))
-                }
-                // NOTE: this allows the Client to leniently implement
-                // new benchmark commands without requiring a companion MR.
-                #[allow(unreachable_patterns)]
-                _ => Err("Benchmarking sub-command unsupported".into()),
-            }
-        }
-        #[cfg(feature = "try-runtime")]
-        Some(Subcommand::TryRuntime(cmd)) => {
-            let runner = cli.create_runner(cmd)?;
+							.into(),
+					)
+					.into()),
+				#[cfg(feature = "runtime-benchmarks")]
+				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
+					construct_partials!(config, |partials| {
+						let db = partials.backend.expose_db();
+						let storage = partials.backend.expose_storage();
 
-            use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
-            type HostFunctionsOf<E> = ExtendedHostFunctions<
-                sp_io::SubstrateHostFunctions,
-                <E as NativeExecutionDispatch>::ExtendHostFunctions,
-            >;
-
-            // grab the task manager.
-            let registry = &runner
-                .config()
-                .prometheus_config
-                .as_ref()
-                .map(|cfg| &cfg.registry);
-            let task_manager =
-                sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
-                    .map_err(|e| format!("Error: {:?}", e))?;
-
-            runner.async_run(|_| {
-                Ok((
-                    cmd.run::<Block, HostFunctionsOf<ParachainNativeExecutor>>(),
-                    task_manager,
-                ))
-            })
-        }
-        #[cfg(not(feature = "try-runtime"))]
-        Some(Subcommand::TryRuntime) => Err("Try-runtime was not enabled when building the node. \
-			You can enable it with `--features try-runtime`."
-            .into()),
-        None => {
-            let runner = cli.create_runner(&cli.run.normalize())?;
-            let collator_options = cli.run.collator_options();
-
-            runner.run_node_until_exit(|config| async move {
-				let hwbench = if !cli.no_hardware_benchmarks {
-					config.database.path().map(|database_path| {
-						let _ = std::fs::create_dir_all(&database_path);
-						sc_sysinfo::gather_hwbench(Some(database_path))
+						cmd.run(config, partials.client.clone(), db, storage)
 					})
-				} else {
-					None
-				};
+				}),
+				BenchmarkCmd::Machine(cmd) =>
+					runner.sync_run(|config| cmd.run(&config, SUBSTRATE_REFERENCE_HARDWARE.clone())),
+				// NOTE: this allows the Client to leniently implement
+				// new benchmark commands without requiring a companion MR.
+				#[allow(unreachable_patterns)]
+				_ => Err("Benchmarking sub-command unsupported".into()),
+			}
+		},
+		Some(Subcommand::TryRuntime) => Err("The `try-runtime` subcommand has been migrated to a standalone CLI (https://github.com/paritytech/try-runtime-cli). It is no longer being maintained here and will be removed entirely some time after January 2024. Please remove this subcommand from your runtime and use the standalone CLI.".into()),
+		Some(Subcommand::Key(cmd)) => Ok(cmd.run(&cli)?),
+		None => {
+			let runner = cli.create_runner(&cli.run.normalize())?;
+			let collator_options = cli.run.collator_options();
+
+			runner.run_node_until_exit(|config| async move {
+				let hwbench = (!cli.no_hardware_benchmarks).then_some(
+					config.database.path().map(|database_path| {
+						let _ = std::fs::create_dir_all(database_path);
+						sc_sysinfo::gather_hwbench(Some(database_path))
+					})).flatten();
 
 				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
-					.ok_or_else(|| "Could not find parachain ID in chain-spec.")?;
+					.ok_or("Could not find parachain extension in chain-spec.")?;
 
-				let infrablockspace_cli = RelayChainCli::new(
+				let infra_relay_cli = RelayChainCli::new(
 					&config,
-					[RelayChainCli::executable_name()].iter().chain(cli.relay_chain_args.iter()),
+					[RelayChainCli::executable_name()].iter().chain(cli.relaychain_args.iter()),
 				);
 
 				let id = ParaId::from(para_id);
 
 				let parachain_account =
-					AccountIdConversion::<infrablockspace_primitives::v2::AccountId>::into_account_truncating(&id);
-
-				let state_version = Cli::native_runtime_version(&config.chain_spec).state_version();
-				let block: Block = generate_genesis_block(&*config.chain_spec, state_version)
-					.map_err(|e| format!("{:?}", e))?;
-				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
+					AccountIdConversion::<primitives::AccountId>::into_account_truncating(&id);
 
 				let tokio_handle = config.tokio_handle.clone();
-				let infrablockspace_config =
-					SubstrateCli::create_configuration(&infrablockspace_cli, &infrablockspace_cli, tokio_handle)
+				let infra_relay_config =
+					SubstrateCli::create_configuration(&infra_relay_cli, &infra_relay_cli, tokio_handle)
 						.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
 				info!("Parachain id: {:?}", id);
 				info!("Parachain Account: {}", parachain_account);
-				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				if !collator_options.relay_chain_rpc_urls.is_empty() && cli.relay_chain_args.len() > 0 {
-					warn!("Detected relay chain node arguments together with --relay-chain-rpc-url. This command starts a minimal Polkadot node that only uses a network-related subset of all relay chain CLI options.");
-				}
-
-				crate::service::start_parachain_node(
-					config,
-					infrablockspace_config,
-					collator_options,
-					id,
-					hwbench,
-				)
+				crate::service::start_generic_aura_node::<
+				infra_did_parachain_runtime::RuntimeApi,
+					AuraId,
+				>(config, infra_relay_config, collator_options, id, hwbench)
 				.await
 				.map(|r| r.0)
 				.map_err(Into::into)
 			})
-        }
-    }
+		},
+	}
 }
 
 impl DefaultConfigurationValues for RelayChainCli {
@@ -333,12 +301,8 @@ impl DefaultConfigurationValues for RelayChainCli {
         30334
     }
 
-    fn rpc_ws_listen_port() -> u16 {
+    fn rpc_listen_port() -> u16 {
         9945
-    }
-
-    fn rpc_http_listen_port() -> u16 {
-        9934
     }
 
     fn prometheus_listen_port() -> u16 {
@@ -370,16 +334,8 @@ impl CliConfiguration<Self> for RelayChainCli {
             .or_else(|| self.base_path.clone().map(Into::into)))
     }
 
-    fn rpc_http(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
-        self.base.base.rpc_http(default_listen_port)
-    }
-
-    fn rpc_ipc(&self) -> Result<Option<String>> {
-        self.base.base.rpc_ipc()
-    }
-
-    fn rpc_ws(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
-        self.base.base.rpc_ws(default_listen_port)
+    fn rpc_addr(&self, default_listen_port: u16) -> Result<Option<SocketAddr>> {
+        self.base.base.rpc_addr(default_listen_port)
     }
 
     fn prometheus_config(
@@ -431,8 +387,8 @@ impl CliConfiguration<Self> for RelayChainCli {
         self.base.base.rpc_methods()
     }
 
-    fn rpc_ws_max_connections(&self) -> Result<Option<usize>> {
-        self.base.base.rpc_ws_max_connections()
+    fn rpc_max_connections(&self) -> Result<u32> {
+        self.base.base.rpc_max_connections()
     }
 
     fn rpc_cors(&self, is_dev: bool) -> Result<Option<Vec<String>>> {

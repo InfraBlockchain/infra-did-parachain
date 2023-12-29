@@ -1,7 +1,7 @@
 FROM ubuntu:jammy AS builder
 
 # The node will be built in this directory
-WORKDIR /infra-did-substrate
+WORKDIR /infra-did-parachain
 
 RUN apt -y update && \
   apt install -y --no-install-recommends \
@@ -16,12 +16,12 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 ENV PATH /root/.cargo/bin:$PATH
 
 # setup rust nightly channel, pinning specific version as newer versions have a regression
-RUN rustup install nightly-2023-02-20
+RUN rustup install nightly-2023-12-01
 
-RUN rustup default nightly-2023-02-20
+RUN rustup default nightly-2023-12-01
 
 # install wasm toolchain for substrate
-RUN rustup target add wasm32-unknown-unknown --toolchain nightly-2023-02-20
+RUN rustup target add wasm32-unknown-unknown --toolchain nightly-2023-12-01
 
 #compiler ENV
 ENV CC clang
@@ -33,14 +33,14 @@ COPY . .
 
 RUN echo 'Building in release mode.' ; \
     cargo build --release ; \
-    mv /infra-did-substrate/target/release/infradid /infra-did-substrate/target/; 
+    mv /infra-did-parachain/target/release/infra-did-parachain /infra-did-parachain/target/; 
 
 # Final stage. Copy the node executable and the script
 FROM ubuntu:jammy
 
-WORKDIR /infra-did-substrate
+WORKDIR /infra-did-parachain
 
-COPY --from=builder /infra-did-substrate/target/infradid .
+COPY --from=builder /infra-did-parachain/target/infra-did-parachain .
 
 # curl is required for uploading to keystore
 # note: `subkey insert` is a potential alternarve to curl
@@ -53,5 +53,5 @@ EXPOSE 30333 9933 9944
 
 ENV RUST_BACKTRACE 1
 
-ENTRYPOINT ["./infradid"]
+ENTRYPOINT ["./infra-did-parachain"]
 CMD []

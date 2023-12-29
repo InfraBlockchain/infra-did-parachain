@@ -1,22 +1,38 @@
+// Copyright (C) Parity Technologies (UK) Ltd.
+// This file is part of Cumulus.
+
+// Cumulus is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Cumulus is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
+
 use cumulus_primitives_core::ParaId;
-use infra_did_runtime::{
-    did::{Did, DidKey},
-    keys_and_sigs::PublicKey,
-    AccountId, AuraId, DIDModuleConfig, Signature, EXISTENTIAL_DEPOSIT,
-};
+use hex_literal::hex;
+use infra_did_parachain_runtime::{AccountId, AuraId, Signature};
+use parachains_common::types::Balance as DIDBalance;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
-use sp_core::{sr25519, Pair, Public};
+use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
-pub type ChainSpec = sc_service::GenericChainSpec<infra_did_runtime::GenesisConfig, Extensions>;
+pub type ChainSpec =
+    sc_service::GenericChainSpec<infra_did_parachain_runtime::RuntimeGenesisConfig, Extensions>;
 
-/// The default XCM version to set in genesis config.
+const INFRA_RELAY_ED: DIDBalance = parachains_common::infra_relay::currency::EXISTENTIAL_DEPOSIT;
+
+const PARACHAIN_ID: u32 = 1002;
+
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
-
-const INFRA_DID_PARACHAIN_ID: u32 = 1337;
 
 /// Helper function to generate a crypto pair from seed
 pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
@@ -25,13 +41,19 @@ pub fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Pu
         .public()
 }
 
-/// Create a non-secure development did with specified secret key
-fn did_from_seed(did: &[u8; 32], seed: &[u8; 32]) -> (Did, DidKey) {
-    let pk = sr25519::Pair::from_seed(seed).public().0;
-    (
-        Did(*did),
-        DidKey::new_with_all_relationships(PublicKey::sr25519(pk)),
-    )
+/// Generate collator keys from seed.
+///
+/// This function's return type must always match the session keys of the chain in tuple format.
+pub fn get_collator_keys_from_seed(seed: &str) -> AuraId {
+    get_from_seed::<AuraId>(seed)
+}
+
+/// Helper function to generate an account ID from seed
+pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
+where
+    AccountPublic: From<<TPublic::Pair as Pair>::Public>,
+{
+    AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
 /// The extensions for the [`ChainSpec`].
@@ -53,115 +75,68 @@ impl Extensions {
 
 type AccountPublic = <Signature as Verify>::Signer;
 
-/// Generate collator keys from seed.
-///
-/// This function's return type must always match the session keys of the chain in tuple format.
-pub fn get_collator_keys_from_seed(seed: &str) -> AuraId {
-    get_from_seed::<AuraId>(seed)
-}
-
-/// Helper function to generate an account ID from seed
-pub fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
-where
-    AccountPublic: From<<TPublic::Pair as Pair>::Public>,
-{
-    AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
-}
-
 /// Generate the session keys from individual elements.
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
-pub fn infra_did_session_keys(keys: AuraId) -> infra_did_runtime::SessionKeys {
-    infra_did_runtime::SessionKeys { aura: keys }
+pub fn session_keys(keys: AuraId) -> infra_did_parachain_runtime::SessionKeys {
+    infra_did_parachain_runtime::SessionKeys { aura: keys }
 }
 
 pub fn development_config() -> ChainSpec {
-    // Give your base currency a unit name and decimal places
     let mut properties = sc_chain_spec::Properties::new();
-    properties.insert("tokenSymbol".into(), "IDID".into());
-    properties.insert("tokenDecimals".into(), 12.into());
-    properties.insert("ss58Format".into(), 42.into());
+    properties.insert("ss58Format".into(), 0.into());
+    properties.insert("tokenSymbol".into(), "".into());
+    properties.insert("tokenDecimals".into(), 10.into());
 
     ChainSpec::from_genesis(
         // Name
-        "Infra DID Development",
+        "InfraBlockchain DID Chain Dev",
         // ID
-        "dev",
+        "did-hub-infra-dev",
         ChainType::Development,
         move || {
-            testnet_genesis(
+            parachain_genesis(
                 // initial collators.
-                vec![
-                    (
-                        get_account_id_from_seed::<sr25519::Public>("Alice"),
-                        get_collator_keys_from_seed("Alice"),
-                    ),
-                    (
-                        get_account_id_from_seed::<sr25519::Public>("Bob"),
-                        get_collator_keys_from_seed("Bob"),
-                    ),
-                ],
+                vec![(
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    get_collator_keys_from_seed("Alice"),
+                )],
                 vec![
                     get_account_id_from_seed::<sr25519::Public>("Alice"),
                     get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie"),
                     get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
                     get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
                 ],
-                INFRA_DID_PARACHAIN_ID.into(),
-                [
-                    (
-                        b"Alice\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                        b"Alicesk\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                    ),
-                    (
-                        b"Bob\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                        b"Bobsk\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                    ),
-                    (
-                        b"Charlie\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                        b"Charliesk\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                    ),
-                ]
-                .iter()
-                .map(|(name, sk)| did_from_seed(name, sk))
-                .collect(),
+                Some(get_account_id_from_seed::<sr25519::Public>("Alice")),
+                PARACHAIN_ID.into(),
             )
         },
         Vec::new(),
         None,
         None,
         None,
-        None,
+        Some(properties),
         Extensions {
-            relay_chain: "infrablockspace-dev".into(), // You MUST set this to the correct network!
-            para_id: INFRA_DID_PARACHAIN_ID,
+            relay_chain: "infra-relay-dev".into(),
+            para_id: PARACHAIN_ID,
         },
     )
 }
 
-pub fn local_testnet_config() -> ChainSpec {
-    // Give your base currency a unit name and decimal places
+pub fn local_config() -> ChainSpec {
     let mut properties = sc_chain_spec::Properties::new();
-    properties.insert("tokenSymbol".into(), "IDID".into());
-    properties.insert("tokenDecimals".into(), 12.into());
-    properties.insert("ss58Format".into(), 42.into());
+    properties.insert("ss58Format".into(), 0.into());
+    properties.insert("tokenSymbol".into(), "".into());
+    properties.insert("tokenDecimals".into(), 10.into());
 
     ChainSpec::from_genesis(
         // Name
-        "Infra DID Local Testnet",
+        "InfraBlockchain DID Chain Local",
         // ID
-        "local_testnet",
+        "did-hub-infra-local",
         ChainType::Local,
         move || {
-            testnet_genesis(
+            parachain_genesis(
                 // initial collators.
                 vec![
                     (
@@ -187,237 +162,119 @@ pub fn local_testnet_config() -> ChainSpec {
                     get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
                     get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
                 ],
-                INFRA_DID_PARACHAIN_ID.into(),
-                [
-                    (
-                        b"Alice\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                        b"Alicesk\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                    ),
-                    (
-                        b"Bob\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                        b"Bobsk\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                    ),
-                    (
-                        b"Charlie\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                        b"Charliesk\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                    ),
-                ]
-                .iter()
-                .map(|(name, sk)| did_from_seed(name, sk))
-                .collect(),
+                Some(get_account_id_from_seed::<sr25519::Public>("Alice")),
+                PARACHAIN_ID.into(),
             )
         },
-        // Bootnodes
         Vec::new(),
-        // Telemetry
         None,
-        // Protocol ID
-        Some("infra-did"),
-        // Fork ID
         None,
-        // Properties
+        None,
         Some(properties),
-        // Extensions
         Extensions {
-            relay_chain: "infrablockspace-local".into(), // You MUST set this to the correct network!
-            para_id: INFRA_DID_PARACHAIN_ID,
+            relay_chain: "infra-relay-local".into(),
+            para_id: PARACHAIN_ID,
         },
     )
 }
 
-fn testnet_genesis(
-    invulnerables: Vec<(AccountId, AuraId)>,
-    endowed_accounts: Vec<AccountId>,
-    id: ParaId,
-    dids: Vec<(Did, DidKey)>,
-) -> infra_did_runtime::GenesisConfig {
-    infra_did_runtime::GenesisConfig {
-        system: infra_did_runtime::SystemConfig {
-            code: infra_did_runtime::WASM_BINARY
-                .expect("WASM binary was not build, please build it!")
-                .to_vec(),
-        },
-        balances: infra_did_runtime::BalancesConfig {
-            balances: endowed_accounts
-                .iter()
-                .cloned()
-                .map(|k| (k, 1 << 60))
-                .collect(),
-        },
-        assets: infra_did_runtime::AssetsConfig {
-            assets: vec![(
-                99,                                                   // asset_id
-                get_account_id_from_seed::<sr25519::Public>("Alice"), // owner
-                true,                                                 // is_sufficient
-                1000,                                                 // min_balance
-            )],
-            metadata: vec![(99, "iTEST".into(), "iTEST".into(), 12)],
-            accounts: vec![(
-                99,
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
-                1_000_000_000_000, // endow only 1 iTest for test
-            )],
-            ..Default::default()
-        },
-        parachain_info: infra_did_runtime::ParachainInfoConfig { parachain_id: id },
-        collator_selection: infra_did_runtime::CollatorSelectionConfig {
-            invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
-            candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
-            ..Default::default()
-        },
-        session: infra_did_runtime::SessionConfig {
-            keys: invulnerables
-                .into_iter()
-                .map(|(acc, aura)| {
-                    (
-                        acc.clone(),                  // account id
-                        acc,                          // validator id
-                        infra_did_session_keys(aura), // session keys
-                    )
-                })
-                .collect(),
-        },
-        // no need to pass anything to aura, in fact it will panic if we do. Session will take care
-        // of this.
-        aura: Default::default(),
-        aura_ext: Default::default(),
-        parachain_system: Default::default(),
-        infrablockspace_xcm: infra_did_runtime::InfrablockspaceXcmConfig {
-            safe_xcm_version: Some(SAFE_XCM_VERSION),
-        },
-        sudo: infra_did_runtime::SudoConfig {
-            key: Some(get_account_id_from_seed::<sr25519::Public>("Alice")),
-        },
-        did_module: DIDModuleConfig { dids },
-    }
-}
-
+// Not used for syncing, but just to determine the genesis values set for the upgrade from shell.
 pub fn mainnet_config() -> ChainSpec {
-    // Give your base currency a unit name and decimal places
     let mut properties = sc_chain_spec::Properties::new();
-    properties.insert("tokenSymbol".into(), "IDID".into());
-    properties.insert("tokenDecimals".into(), 12.into());
-    properties.insert("ss58Format".into(), 42.into());
+    properties.insert("ss58Format".into(), 0.into());
+    properties.insert("tokenSymbol".into(), "".into());
+    properties.insert("tokenDecimals".into(), 10.into());
 
     ChainSpec::from_genesis(
         // Name
-        "Infra DID Mainnet",
+        "InfraBlockchain DID Chain Main",
         // ID
-        "mainnet",
+        "did-hub-infra",
         ChainType::Live,
         move || {
-            mainnet_genesis(
+            parachain_genesis(
                 // initial collators.
                 vec![
                     (
-                        get_account_id_from_seed::<sr25519::Public>("Alice"),
-                        get_collator_keys_from_seed("Alice"),
+                        hex!("4c3d674d2a01060f0ded218e5dcc6f90c1726f43df79885eb3e22d97a20d5421")
+                            .into(),
+                        hex!("4c3d674d2a01060f0ded218e5dcc6f90c1726f43df79885eb3e22d97a20d5421")
+                            .unchecked_into(),
                     ),
                     (
-                        get_account_id_from_seed::<sr25519::Public>("Bob"),
-                        get_collator_keys_from_seed("Bob"),
+                        hex!("c7d7d38d16bc23c6321152c50306212dc22c0efc04a2e52b5cccfc31ab3d7811")
+                            .into(),
+                        hex!("c7d7d38d16bc23c6321152c50306212dc22c0efc04a2e52b5cccfc31ab3d7811")
+                            .unchecked_into(),
+                    ),
+                    (
+                        hex!("c5c07ba203d7375675f5c1ebe70f0a5bb729ae57b48bcc877fcc2ab21309b762")
+                            .into(),
+                        hex!("c5c07ba203d7375675f5c1ebe70f0a5bb729ae57b48bcc877fcc2ab21309b762")
+                            .unchecked_into(),
+                    ),
+                    (
+                        hex!("0b2d0013fb974794bd7aa452465b567d48ef70373fe231a637c1fb7c547e85b3")
+                            .into(),
+                        hex!("0b2d0013fb974794bd7aa452465b567d48ef70373fe231a637c1fb7c547e85b3")
+                            .unchecked_into(),
                     ),
                 ],
-                vec![
-                    get_account_id_from_seed::<sr25519::Public>("Alice"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-                    get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-                ],
-                INFRA_DID_PARACHAIN_ID.into(),
-                [
-                    (
-                        b"Alice\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                        b"Alicesk\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                    ),
-                    (
-                        b"Bob\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                        b"Bobsk\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                    ),
-                    (
-                        b"Charlie\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                        b"Charliesk\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-                    ),
-                ]
-                .iter()
-                .map(|(name, sk)| did_from_seed(name, sk))
-                .collect(),
+                Default::default(),
+                None,
+                PARACHAIN_ID.into(),
             )
         },
-        // Bootnodes
-        Vec::new(),
-        // Telemetry
+        vec![],
         None,
-        // Protocol ID
-        Some("infra-did"),
-        // Fork ID
         None,
-        // Properties
+        None,
         Some(properties),
-        // Extensions
         Extensions {
-            relay_chain: "infrablockspace".into(), // You MUST set this to the correct network!
-            para_id: INFRA_DID_PARACHAIN_ID,
+            relay_chain: "infra-relay".into(),
+            para_id: PARACHAIN_ID,
         },
     )
 }
 
-fn mainnet_genesis(
+fn parachain_genesis(
     invulnerables: Vec<(AccountId, AuraId)>,
     endowed_accounts: Vec<AccountId>,
+    root_key: Option<AccountId>,
     id: ParaId,
-    dids: Vec<(Did, DidKey)>,
-) -> infra_did_runtime::GenesisConfig {
-    infra_did_runtime::GenesisConfig {
-        system: infra_did_runtime::SystemConfig {
-            code: infra_did_runtime::WASM_BINARY
+) -> infra_did_parachain_runtime::RuntimeGenesisConfig {
+    infra_did_parachain_runtime::RuntimeGenesisConfig {
+        system: infra_did_parachain_runtime::SystemConfig {
+            code: infra_did_parachain_runtime::WASM_BINARY
                 .expect("WASM binary was not build, please build it!")
                 .to_vec(),
+            ..Default::default()
         },
-        balances: infra_did_runtime::BalancesConfig {
+        balances: infra_did_parachain_runtime::BalancesConfig {
             balances: endowed_accounts
                 .iter()
                 .cloned()
-                .map(|k| (k, 1 << 60))
+                .map(|k| (k, INFRA_RELAY_ED * 4096))
                 .collect(),
         },
-        assets: infra_did_runtime::AssetsConfig {
-            assets: vec![(
-                99,                                                   // asset_id
-                get_account_id_from_seed::<sr25519::Public>("Alice"), // owner
-                true,                                                 // is_sufficient
-                1000,                                                 // min_balance
-            )],
-            metadata: vec![(99, "iTEST".into(), "iTEST".into(), 12)],
-            accounts: vec![(
-                99,
-                get_account_id_from_seed::<sr25519::Public>("Alice"),
-                1_000_000_000_000, // endow only 1 iTest for test
-            )],
+        assets: Default::default(),
+        parachain_info: infra_did_parachain_runtime::ParachainInfoConfig {
+            parachain_id: id,
             ..Default::default()
         },
-        parachain_info: infra_did_runtime::ParachainInfoConfig { parachain_id: id },
-        collator_selection: infra_did_runtime::CollatorSelectionConfig {
+        collator_selection: infra_did_parachain_runtime::CollatorSelectionConfig {
             invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
-            candidacy_bond: EXISTENTIAL_DEPOSIT * 16,
+            candidacy_bond: INFRA_RELAY_ED * 16,
             ..Default::default()
         },
-        session: infra_did_runtime::SessionConfig {
+        session: infra_did_parachain_runtime::SessionConfig {
             keys: invulnerables
                 .into_iter()
                 .map(|(acc, aura)| {
                     (
-                        acc.clone(),                  // account id
-                        acc,                          // validator id
-                        infra_did_session_keys(aura), // session keys
+                        acc.clone(),        // account id
+                        acc,                // validator id
+                        session_keys(aura), // session keys
                     )
                 })
                 .collect(),
@@ -427,12 +284,11 @@ fn mainnet_genesis(
         aura: Default::default(),
         aura_ext: Default::default(),
         parachain_system: Default::default(),
-        infrablockspace_xcm: infra_did_runtime::InfrablockspaceXcmConfig {
+        ibs_xcm: infra_did_parachain_runtime::IbsXcmConfig {
             safe_xcm_version: Some(SAFE_XCM_VERSION),
+            ..Default::default()
         },
-        sudo: infra_did_runtime::SudoConfig {
-            key: Some(get_account_id_from_seed::<sr25519::Public>("Alice")),
-        },
-        did_module: DIDModuleConfig { dids },
+        sudo: infra_did_parachain_runtime::SudoConfig { key: root_key },
+        did_module: Default::default(),
     }
 }
