@@ -119,6 +119,24 @@ impl_opaque_keys! {
     }
 }
 
+#[cfg(not(feature = "std"))]
+mod wasm_handlers {
+    #[panic_handler]
+    #[no_mangle]
+    pub fn panic(info: &core::panic::PanicInfo) -> ! {
+        let message = sp_std::alloc::format!("{}", info);
+        log::error!("{}", message);
+        ::core::arch::wasm32::unreachable();
+    }
+
+    #[cfg(enable_alloc_error_handler)]
+    #[alloc_error_handler]
+    pub fn oom(_: core::alloc::Layout) -> ! {
+        log::error!("Runtime memory exhausted. Aborting");
+        ::core::arch::wasm32::unreachable();
+    }
+}
+
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
     spec_name: create_runtime_str!("InfraBlockchain DID Parachain"),
