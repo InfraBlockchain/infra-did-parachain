@@ -114,3 +114,6 @@ try-runtime = [
 	"infrablockchain-service/try-runtime",
 	"sp-runtime/try-runtime",
 ]
+fast-runtime = [
+	"infra-did-parachain-runtime/fast-runtime",
+]

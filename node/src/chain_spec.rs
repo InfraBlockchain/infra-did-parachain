@@ -284,7 +284,7 @@ fn parachain_genesis(
         aura: Default::default(),
         aura_ext: Default::default(),
         parachain_system: Default::default(),
-        ibs_xcm: infra_did_parachain_runtime::IbsXcmConfig {
+        infra_xcm: infra_did_parachain_runtime::InfraXcmConfig {
             safe_xcm_version: Some(SAFE_XCM_VERSION),
             ..Default::default()
         },
