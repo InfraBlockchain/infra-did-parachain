@@ -16,8 +16,7 @@
 
 use cumulus_primitives_core::ParaId;
 use hex_literal::hex;
-use infra_did_parachain_runtime::{AccountId, AuraId, Signature};
-use parachains_common::types::Balance as DIDBalance;
+use parachains_common::{AccountId, AuraId, Signature, Balance as DIDBalance};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -257,7 +256,6 @@ fn parachain_genesis(
                 .map(|k| (k, INFRA_RELAY_ED * 4096))
                 .collect(),
         },
-        assets: Default::default(),
         parachain_info: infra_did_parachain_runtime::ParachainInfoConfig {
             parachain_id: id,
             ..Default::default()
@@ -290,5 +288,6 @@ fn parachain_genesis(
         },
         sudo: infra_did_parachain_runtime::SudoConfig { key: root_key },
         did_module: Default::default(),
+        ..Default::default()
     }
 }

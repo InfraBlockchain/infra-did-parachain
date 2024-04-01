@@ -64,10 +64,7 @@ pallet-transaction-payment-rpc = { git = "https://github.com/InfraBlockchain/inf
 substrate-state-trie-migration-rpc = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master" }
 
 # Infra Relay
-infrablockchain-cli = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", features = [
-	"rococo-native",
-	"infra-relay-native",
-] }
+infrablockchain-cli = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", features = ["infra-relay-native",] }
 primitives = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master" }
 infrablockchain-service = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master" }
 xcm = { package = "staging-xcm", git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master" }

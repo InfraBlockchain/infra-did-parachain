@@ -10,19 +10,19 @@ pub use constants::{currency::*, fee::WeightToFee};
 
 mod weights;
 pub mod xcm_config;
-use xcm_config::XcmRouter;
-
+use xcm_config::{XcmRouter, UniversalLocation, NativeAssetsPalletLocation};
+use xcm::latest::{BodyId, MultiLocation};
 use cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
-pub use parachains_common::{
-    constants::*, impls::DealWithFees, infra_relay::consensus::*, opaque::*, types::*,
+use parachains_common::{
+	constants::*, impls::DealWithFees, infra_relay::consensus::*, opaque::*, AccountId, AuraId,
+	Balance, BlockNumber, Hash, Nonce, Signature,
 };
-
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
     create_runtime_str, generic, impl_opaque_keys,
     traits::{
-        AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, TryConvertInto as JustTry,
+        AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, TryConvertInto as JustTry, AccountIdConversion
     },
     transaction_validity::{TransactionSource, TransactionValidity},
     ApplyExtrinsicResult,
@@ -34,34 +34,36 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 use frame_support::{
-    construct_runtime,
-    dispatch::DispatchClass,
-    parameter_types,
-    traits::{
-        fungible::HoldConsideration, AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8,
-        LinearStoragePrice,
-    },
-    weights::{ConstantMultiplier, Weight},
-    PalletId,
+	construct_runtime,
+	dispatch::DispatchClass,
+	parameter_types,
+	traits::{
+		tokens::fungibles::{Balanced, Credit, UnionOf},
+		AsEnsureOriginWithArg, ConstBool, ConstU32, ConstU64, ConstU8, EitherOfDiverse,
+		InstanceFilter,
+	},
+	weights::{ConstantMultiplier, Weight},
+	PalletId,
 };
 use frame_system::{
     limits::{BlockLength, BlockWeights},
     EnsureRoot, EnsureSigned,
 };
-use pallet_system_token_tx_payment::{CreditToBucket, TransactionFeeCharger};
-pub use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use pallet_system_token_tx_payment::{TransactionFeeCharger, HandleCredit};
 pub use sp_runtime::{
-    types::{VoteAssetId, VoteWeight},
+    infra::*,
     MultiAddress, Perbill, Permill,
 };
 use xcm_config::{XcmConfig, XcmOriginToTransactDispatchOrigin};
+use infra_asset_common::{
+	local_and_foreign_assets::LocalFromLeft, AssetIdForNativeAssets, AssetIdForNativeAssetsConvert,
+};
 
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 
 // Polkadot imports
 use runtime_common::BlockHashCount;
-use runtime_parachains::system_token_aggregator;
 
 use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
 
@@ -171,27 +173,78 @@ parameter_types! {
 /// We allow root and the Relay Chain council to execute privileged asset operations.
 pub type RootOrigin = EnsureRoot<AccountId>;
 
-impl pallet_assets::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type Balance = Balance;
-    type AssetId = AssetId;
-    type AssetIdParameter = codec::Compact<AssetId>;
-    type Currency = Balances;
-    type CreateOrigin = AsEnsureOriginWithArg<EnsureSigned<AccountId>>;
-    type ForceOrigin = RootOrigin;
-    type AssetDeposit = DepositToCreateAsset;
-    type MetadataDepositBase = MetadataDepositBase;
-    type MetadataDepositPerByte = MetadataDepositPerByte;
-    type ApprovalDeposit = ApprovalDeposit;
-    type AssetAccountDeposit = DepositToMaintainAsset;
-    type RemoveItemsLimit = frame_support::traits::ConstU32<1000>;
-    type WeightInfo = weights::pallet_assets::WeightInfo<Runtime>;
-    type Freezer = ();
-    type Extra = ();
-    type CallbackHandle = ();
-    #[cfg(feature = "runtime-benchmarks")]
-    type BenchmarkHelper = ();
+pub type NativeAssetsInstance = pallet_assets::Instance1;
+type NativeAssetsCall = pallet_assets::Call<Runtime, NativeAssetsInstance>;
+impl pallet_assets::Config<NativeAssetsInstance> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = Balance;
+	type AssetId = AssetIdForNativeAssets;
+	type AssetIdParameter = codec::Compact<AssetIdForNativeAssets>;
+	type SystemTokenWeight = SystemTokenWeight;
+	type Currency = Balances;
+	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
+	type ForceOrigin = RootOrigin;
+	type AssetDeposit = DepositToCreateAsset;
+	type AssetAccountDeposit = DepositToMaintainAsset;
+	type MetadataDepositBase = MetadataDepositBase;
+	type MetadataDepositPerByte = MetadataDepositPerByte;
+	type ApprovalDeposit = ApprovalDeposit;
+	type StringLimit = StringLimit;
+	type Freezer = ();
+	type Extra = ();
+	type CallbackHandle = ();
+	type WeightInfo = ();
+	type RemoveItemsLimit = ConstU32<1000>;
 }
+
+pub type ForeignAssetsInstance = pallet_assets::Instance2;
+type ForeignAssetsCall = pallet_assets::Call<Runtime, ForeignAssetsInstance>;
+impl pallet_assets::Config<ForeignAssetsInstance> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = Balance;
+	type AssetId = xcm::v3::MultiLocation;
+	type AssetIdParameter = xcm::v3::MultiLocation;
+	type SystemTokenWeight = SystemTokenWeight;
+	type Currency = Balances;
+	type CreateOrigin = AsEnsureOriginWithArg<frame_system::EnsureSigned<AccountId>>;
+	type ForceOrigin = RootOrigin; //TODO
+	type AssetDeposit = DepositToCreateAsset;
+	type AssetAccountDeposit = DepositToMaintainAsset;
+	type MetadataDepositBase = MetadataDepositBase;
+	type MetadataDepositPerByte = MetadataDepositPerByte;
+	type ApprovalDeposit = ApprovalDeposit;
+	type StringLimit = StringLimit;
+	type Freezer = ();
+	type Extra = ();
+	type CallbackHandle = ();
+	type WeightInfo = ();
+	type RemoveItemsLimit = ConstU32<1000>;
+}
+
+pub struct ReanchorHandler;
+impl ReanchorSystemToken<MultiLocation> for ReanchorHandler {
+	type Error = ();
+	fn reanchor_system_token(l: &mut MultiLocation) -> Result<(), Self::Error> {
+		let target = MultiLocation::parent();
+		let context = UniversalLocation::get();
+		l.reanchor(&target, context).map_err(|_| {})?;
+		Ok(())
+	}
+}
+
+/// Union fungibles implementation for `Assets` and `ForeignAssets`.
+pub type NativeAndForeignAssets = UnionOf<
+	Assets,
+	ForeignAssets,
+	LocalFromLeft<
+		AssetIdForNativeAssetsConvert<NativeAssetsPalletLocation>,
+		AssetIdForNativeAssets,
+		xcm::v3::MultiLocation,
+	>,
+	xcm::v3::MultiLocation,
+	AccountId,
+	ReanchorHandler,
+>;
 
 parameter_types! {
     pub const FeeTreasuryId: PalletId = PalletId(*b"infrapid");
@@ -223,17 +276,30 @@ impl frame_support::traits::Contains<RuntimeCall> for BootstrapCallFilter {
 }
 
 impl pallet_system_token_tx_payment::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type InfraTxInterface = InfraParaCore;
-    type Assets = Assets;
-    type OnChargeSystemToken = TransactionFeeCharger<
-        Runtime,
-        pallet_assets::BalanceToAssetBalance<Balances, Runtime, ConvertInto>,
-        CreditToBucket<Runtime>,
-        JustTry,
-    >;
-    type BootstrapCallFilter = BootstrapCallFilter;
-    type PalletId = FeeTreasuryId;
+	type RuntimeEvent = RuntimeEvent;
+	type SystemConfig = InfraParaCore;
+	type PoTHandler = ParachainSystem;
+	type Fungibles = NativeAndForeignAssets;
+	type OnChargeSystemToken =
+		TransactionFeeCharger<Runtime, SystemTokenConversion, CreditToBucket>;
+	type BootstrapCallFilter = BootstrapCallFilter;
+	type PalletId = FeeTreasuryId;
+}
+
+pub struct CreditToBucket;
+impl HandleCredit<AccountId, NativeAndForeignAssets> for CreditToBucket {
+	fn handle_credit(credit: Credit<AccountId, NativeAndForeignAssets>) {
+		let dest = FeeTreasuryId::get().into_account_truncating();
+		let _ = <NativeAndForeignAssets as Balanced<AccountId>>::resolve(&dest, credit);
+	}
+}
+
+impl pallet_system_token_conversion::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Balance = SystemTokenBalance;
+	type AssetKind = xcm::v3::MultiLocation;
+	type Fungibles = NativeAndForeignAssets;
+	type SystemConfig = InfraParaCore;
 }
 
 parameter_types! {
@@ -362,17 +428,17 @@ type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
 >;
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type OnSystemEvent = ();
-    type SelfParaId = parachain_info::Pallet<Runtime>;
-    type DmpMessageHandler = DmpQueue;
-    type ReservedDmpWeight = ReservedDmpWeight;
-    type OutboundXcmpMessageSource = XcmpQueue;
-    type XcmpMessageHandler = XcmpQueue;
-    type ReservedXcmpWeight = ReservedXcmpWeight;
-    type UpdateRCConfig = InfraParaCore;
-    type CheckAssociatedRelayNumber = RelayNumberStrictlyIncreases;
-    type ConsensusHook = ConsensusHook;
+	type RuntimeEvent = RuntimeEvent;
+	type OnSystemEvent = ();
+	type SelfParaId = parachain_info::Pallet<Runtime>;
+	type DmpMessageHandler = DmpQueue;
+	type ReservedDmpWeight = ReservedDmpWeight;
+	type OutboundXcmpMessageSource = XcmpQueue;
+	type XcmpMessageHandler = XcmpQueue;
+	type ReservedXcmpWeight = ReservedXcmpWeight;
+	type UpdateRCConfig = InfraParaCore;
+	type CheckAssociatedRelayNumber = RelayNumberStrictlyIncreases;
+	type ConsensusHook = ConsensusHook;
 }
 
 parameter_types! {
@@ -380,12 +446,12 @@ parameter_types! {
 }
 
 impl cumulus_pallet_infra_parachain_core::Config for Runtime {
-    type RuntimeOrigin = RuntimeOrigin;
-    type RuntimeEvent = RuntimeEvent;
-    type LocalAssetManager = Assets;
-    type AssetLink = AssetLink;
-    type ParachainSystem = ParachainSystem;
-    type ActiveRequestPeriod = ActiveRequestPeriod;
+	type RuntimeOrigin = RuntimeOrigin;
+	type RuntimeEvent = RuntimeEvent;
+	type SystemTokenId = MultiLocation;
+	type UniversalLocation = UniversalLocation;
+	type Fungibles = NativeAndForeignAssets;
+	type ActiveRequestPeriod = ActiveRequestPeriod;
 }
 
 impl parachain_info::Config for Runtime {}
@@ -465,26 +531,6 @@ impl pallet_collator_selection::Config for Runtime {
     type WeightInfo = weights::pallet_collator_selection::WeightInfo<Runtime>;
 }
 
-impl pallet_asset_link::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type Assets = Assets;
-    type WeightInfo = ();
-}
-
-parameter_types! {
-    pub const AggregatedPeriod: BlockNumber = 10;
-    pub const IsRelay: bool = false;
-}
-
-impl system_token_aggregator::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type Period = AggregatedPeriod;
-    type LocalAssetManager = Assets;
-    type AssetMultiLocationGetter = AssetLink;
-    type SendXcm = XcmRouter;
-    type IsRelay = IsRelay;
-}
-
 parameter_types! {
     pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
         RuntimeBlockWeights::get().max_block;
@@ -517,11 +563,11 @@ impl pallet_preimage::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type Currency = Balances;
     type ManagerOrigin = EnsureRoot<AccountId>;
-    type Consideration = HoldConsideration<
+    type Consideration = frame_support::traits::fungible::HoldConsideration<
         AccountId,
         Balances,
         PreimageHoldReason,
-        LinearStoragePrice<PreimageBaseDeposit, PreimageByteDeposit, Balance>,
+        frame_support::traits::LinearStoragePrice<PreimageBaseDeposit, PreimageByteDeposit, Balance>,
     >;
 }
 
@@ -636,6 +682,7 @@ construct_runtime!(
         Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
         TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 11,
         SystemTokenTxPayment: pallet_system_token_tx_payment::{Pallet, Event<T>} = 12,
+        SystemTokenConversion: pallet_system_token_conversion::{Pallet, Event<T>} = 13,
 
         // Collator support. the order of these 5 are important and shall not change.
         Authorship: pallet_authorship::{Pallet, Storage} = 20,
@@ -654,10 +701,9 @@ construct_runtime!(
         Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>, HoldReason} = 40,
         Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 41,
 
-        // The main stage.
-        Assets: pallet_assets::{Pallet, Call, Storage, Event<T>, Config<T>} = 50,
-        AssetLink: pallet_asset_link::{Pallet, Storage, Event<T>} = 52,
-        SystemTokenAggregator: system_token_aggregator = 53,
+        // Assets
+		Assets: pallet_assets::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 50,
+		ForeignAssets: pallet_assets::<Instance2>::{Pallet, Call, Storage, Event<T>, Config<T>} = 51,
 
         // DID.
         DIDModule: did::{Pallet, Call, Storage, Event<T>, Config<T>} = 61,

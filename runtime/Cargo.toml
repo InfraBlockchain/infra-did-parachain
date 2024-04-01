@@ -41,6 +41,7 @@ pallet-timestamp = { git = "https://github.com/InfraBlockchain/infrablockchain-s
 pallet-transaction-payment = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", default-features = false }
 pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", default-features = false }
 pallet-system-token-tx-payment = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", default-features = false }
+pallet-system-token-conversion = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", default-features = false }
 
 # Primitives
 sp-api = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", default-features = false }
@@ -67,7 +68,6 @@ runtime-parachains = { git = "https://github.com/InfraBlockchain/infrablockchain
 
 # Xcm
 pallet-xcm = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", default-features = false }
-pallet-asset-link = { package = "infra-asset-link", git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", default-features = false }
 xcm-primitives = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", default-features = false }
 xcm = { package = "staging-xcm", git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", default-features = false }
 xcm-builder = { package = "staging-xcm-builder", git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", default-features = false }
@@ -89,7 +89,7 @@ cumulus-primitives-timestamp = { git = "https://github.com/InfraBlockchain/infra
 pallet-collator-selection = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", default-features = false }
 parachain-info = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", default-features = false }
 parachains-common = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", default-features = false }
-assets-common = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", default-features = false }
+infra-asset-common = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "master", default-features = false }
 
 
 [dev-dependencies]
@@ -121,11 +121,11 @@ std = [
 	"pallet-scheduler/std",
 	"pallet-preimage/std",
 	"pallet-assets/std",
-	"pallet-asset-link/std",
 	"xcm-primitives/std",
 	"frame-benchmarking/std",
 	"frame-try-runtime/std",
 	"pallet-system-token-tx-payment/std",
+	"pallet-system-token-conversion/std",
 	"pallet-aura/std",
 	"pallet-authorship/std",
 	"pallet-balances/std",
@@ -159,13 +159,12 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"xcm/std",
-	"assets-common/std",
+	"infra-asset-common/std",
 	"parachains-common/std",
 ]
 
 runtime-benchmarks = [
 	"did-core/runtime-benchmarks",
-	"pallet-asset-link/runtime-benchmarks",
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
 	"frame-system-benchmarking/runtime-benchmarks",
