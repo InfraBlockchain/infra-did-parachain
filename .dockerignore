@@ -2,3 +2,4 @@
 .vscode
 scripts
 target
+!target/release/infra-did-parachain
