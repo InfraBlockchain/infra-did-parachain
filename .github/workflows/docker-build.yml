@@ -43,7 +43,8 @@ jobs:
                   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
                   source ~/.cargo/env
                   rustup default nightly-2024-06-01
-                  rustup target add wasm32-unknown-unknown
+                  rustup target add wasm32-unknown-unknown --toolchain nightly-2024-06-01
+                  rustup component add rust-src --toolchain nightly-2024-06-01
 
             - name: Check Build
               run: |
@@ -75,6 +76,6 @@ jobs:
                   # push it to ECR so that it can
                   # be deployed to ECS.
                   docker system prune -a -f
-                  docker build -f Dockerfile -t public.ecr.aws/v8x3j0k5/infra-did-parachain:$IMAGE_TAG .
+                  docker build -f docker/injected.Dockerfile -t public.ecr.aws/v8x3j0k5/infra-did-parachain:$IMAGE_TAG .
                   docker push public.ecr.aws/v8x3j0k5/infra-did-parachain:$IMAGE_TAG
                   echo "::set-output name=image::public.ecr.aws/v8x3j0k5/infra-did-parachain:$IMAGE_TAG"
