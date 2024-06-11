@@ -15,9 +15,10 @@
 // along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{
-    chain_spec,
-    cli::{Cli, RelayChainCli, Subcommand},
-    service::{new_partial, Block},
+	chain_spec,
+	cli::{Cli, RelayChainCli, Subcommand},
+	fake_runtime_api::{asset_hub_polkadot_aura::RuntimeApi as AssetHubPolkadotRuntimeApi, aura::RuntimeApi},
+	service::{new_partial, Block},
 };
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
@@ -34,10 +35,10 @@ use std::net::SocketAddr;
 fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
     Ok(match id {
         "did-hub-infra-dev" | "dev" | "" => Box::new(chain_spec::development_config()),
-        "did-hub-infra-local" => Box::new(chain_spec::local_config()),
-        "did-hub-infra" => Box::new(chain_spec::mainnet_config()),
+        "did-hub-infra-testnet" => Box::new(chain_spec::testnet_config()),
+        "did-hub-infra-mainnet" => Box::new(chain_spec::mainnet_config()),
         // -- Loading a specific spec from disk
-        path => Box::new(chain_spec::ChainSpec::from_json_file(
+        path => Box::new(chain_spec::InfraDIDChainSpec::from_json_file(
             std::path::PathBuf::from(path),
         )?),
     })
@@ -111,7 +112,7 @@ impl SubstrateCli for RelayChainCli {
     }
 
     fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
-        infrablockchain_cli::Cli::from_iter([RelayChainCli::executable_name()].iter()).load_spec(id)
+        polkadot_cli::Cli::from_iter([RelayChainCli::executable_name()].iter()).load_spec(id)
     }
 }
 
@@ -119,11 +120,11 @@ macro_rules! construct_partials {
     ($config:expr, |$partials:ident| $code:expr) => {
         match $config.chain_spec {
             _ => {
-                let $partials = new_partial::<infra_did_parachain_runtime::RuntimeApi, _>(
-                    &$config,
-                    crate::service::aura_build_import_queue::<_, AuraId>,
-                )?;
-                $code
+                let $partials = new_partial::<RuntimeApi, _>(
+					&$config,
+					crate::service::build_relay_to_aura_import_queue::<_, AuraId>,
+				)?;
+				$code
             }
         }
     };
@@ -133,13 +134,13 @@ macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
 		runner.async_run(|$config| {
-			let $components = new_partial::<infra_did_parachain_runtime::RuntimeApi, _>(
-				&$config,
-				crate::service::aura_build_import_queue::<_, AuraId>,
-			)?;
-			let task_manager = $components.task_manager;
-			{ $( $code )* }.map(|v| (v, task_manager))
-		})
+            let $components = new_partial::<RuntimeApi, _>(
+                &$config,
+                crate::service::build_relay_to_aura_import_queue::<_, AuraId>,
+            )?;
+            let task_manager = $components.task_manager;
+            { $( $code )* }.map(|v| (v, task_manager))
+        })
 	}}
 }
 
@@ -194,12 +195,12 @@ pub fn run() -> Result<()> {
 				cmd.run(config, infra_relay_config)
 			})
 		},
-		Some(Subcommand::ExportGenesisState(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.sync_run(|config| {
-				construct_partials!(config, |partials| cmd.run(&*config.chain_spec, &*partials.client))
-			})
-		},
+		Some(Subcommand::ExportGenesisHead(cmd)) => {
+            let runner = cli.create_runner(cmd)?;
+            runner.sync_run(|config| {
+                construct_partials!(config, |partials| cmd.run(partials.client))
+            })
+        },
 		Some(Subcommand::ExportGenesisWasm(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
 			runner.sync_run(|_config| {
@@ -214,7 +215,7 @@ pub fn run() -> Result<()> {
 			match cmd {
 				BenchmarkCmd::Pallet(cmd) =>
 					if cfg!(feature = "runtime-benchmarks") {
-						runner.sync_run(|config| cmd.run::<Block, ()>(config))
+						runner.sync_run(|config| cmd.run::<sp_runtime::traits::HashingFor<Block>, ()>(config))
 					} else {
 						Err("Benchmarking wasn't enabled when building the node. \
 				You can enable it with `--features runtime-benchmarks`."
@@ -273,7 +274,7 @@ pub fn run() -> Result<()> {
 				let id = ParaId::from(para_id);
 
 				let parachain_account =
-					AccountIdConversion::<primitives::AccountId>::into_account_truncating(&id);
+					AccountIdConversion::<polkadot_primitives::AccountId>::into_account_truncating(&id);
 
 				let tokio_handle = config.tokio_handle.clone();
 				let infra_relay_config =
@@ -284,8 +285,8 @@ pub fn run() -> Result<()> {
 				info!("Parachain Account: {}", parachain_account);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				crate::service::start_generic_aura_node::<
-				infra_did_parachain_runtime::RuntimeApi,
+				crate::service::start_asset_hub_lookahead_node::<
+				AssetHubPolkadotRuntimeApi,
 					AuraId,
 				>(config, infra_relay_config, collator_options, id, hwbench)
 				.await
