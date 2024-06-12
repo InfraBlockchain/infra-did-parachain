@@ -34,9 +34,9 @@ use std::net::SocketAddr;
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
     Ok(match id {
-        "did-hub-infra-dev" | "dev" | "" => Box::new(chain_spec::development_config()),
-        "did-hub-infra-testnet" => Box::new(chain_spec::testnet_config()),
-        "did-hub-infra-mainnet" => Box::new(chain_spec::mainnet_config()),
+        "infra-did-dev" | "dev" | "" => Box::new(chain_spec::development_config()),
+        "infra-did-testnet" => Box::new(chain_spec::testnet_config()),
+        "infra-did-mainnet" => Box::new(chain_spec::mainnet_config()),
         // -- Loading a specific spec from disk
         path => Box::new(chain_spec::InfraDIDChainSpec::from_json_file(
             std::path::PathBuf::from(path),
