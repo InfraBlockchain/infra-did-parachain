@@ -1,4 +1,3 @@
-
 pub mod aura;
 
 use cumulus_primitives_core::CollectCollationInfo;
@@ -10,39 +9,39 @@ use sp_transaction_pool::runtime_api::TaggedTransactionQueue;
 
 /// Convenience trait that defines the basic bounds for the `RuntimeApi` of a parachain node.
 pub trait NodeRuntimeApi<Block: BlockT>:
-	ApiExt<Block>
-	+ Metadata<Block>
-	+ SessionKeys<Block>
-	+ BlockBuilder<Block>
-	+ TaggedTransactionQueue<Block>
-	+ CollectCollationInfo<Block>
-	+ Sized
+    ApiExt<Block>
+    + Metadata<Block>
+    + SessionKeys<Block>
+    + BlockBuilder<Block>
+    + TaggedTransactionQueue<Block>
+    + CollectCollationInfo<Block>
+    + Sized
 {
 }
 
 impl<T, Block: BlockT> NodeRuntimeApi<Block> for T where
-	T: ApiExt<Block>
-		+ Metadata<Block>
-		+ SessionKeys<Block>
-		+ BlockBuilder<Block>
-		+ TaggedTransactionQueue<Block>
-		+ CollectCollationInfo<Block>
+    T: ApiExt<Block>
+        + Metadata<Block>
+        + SessionKeys<Block>
+        + BlockBuilder<Block>
+        + TaggedTransactionQueue<Block>
+        + CollectCollationInfo<Block>
 {
 }
 
 // trait that defines the basic bounds for the `ConstructRuntimeApi` of a parachain
 /// node.
 pub trait ConstructNodeRuntimeApi<Block: BlockT, C: CallApiAt<Block>>:
-	ConstructRuntimeApi<Block, C, RuntimeApi = Self::BoundedRuntimeApi> + Send + Sync + 'static
+    ConstructRuntimeApi<Block, C, RuntimeApi = Self::BoundedRuntimeApi> + Send + Sync + 'static
 {
-	/// Basic bounds for the `RuntimeApi` of a parachain node.
-	type BoundedRuntimeApi: NodeRuntimeApi<Block>;
+    /// Basic bounds for the `RuntimeApi` of a parachain node.
+    type BoundedRuntimeApi: NodeRuntimeApi<Block>;
 }
 
 impl<T, Block: BlockT, C: CallApiAt<Block>> ConstructNodeRuntimeApi<Block, C> for T
 where
-	T: ConstructRuntimeApi<Block, C> + Send + Sync + 'static,
-	T::RuntimeApi: NodeRuntimeApi<Block>,
+    T: ConstructRuntimeApi<Block, C> + Send + Sync + 'static,
+    T::RuntimeApi: NodeRuntimeApi<Block>,
 {
-	type BoundedRuntimeApi = T::RuntimeApi;
+    type BoundedRuntimeApi = T::RuntimeApi;
 }

@@ -25,8 +25,8 @@ mod fake_runtime_api;
 mod service;
 mod cli;
 mod command;
-mod rpc;
 mod common;
+mod rpc;
 
 fn main() -> sc_cli::Result<()> {
     command::run()

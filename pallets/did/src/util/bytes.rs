@@ -9,37 +9,37 @@ use sp_std::{fmt, vec::Vec};
 
 /// Wrapper around the bounded vector. providing the ability to encode/decode in `hex` format.
 #[derive(
-	Encode,
-	Decode,
-	DebugNoBound,
-	CloneNoBound,
-	PartialEqNoBound,
-	EqNoBound,
-	DefaultNoBound,
-	PartialOrd,
-	Ord,
-	MaxEncodedLen,
+    Encode,
+    Decode,
+    DebugNoBound,
+    CloneNoBound,
+    PartialEqNoBound,
+    EqNoBound,
+    DefaultNoBound,
+    PartialOrd,
+    Ord,
+    MaxEncodedLen,
 )]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(
-	feature = "serde",
-	serde(bound(serialize = "MaxSize: Sized", deserialize = "MaxSize: Sized"))
+    feature = "serde",
+    serde(bound(serialize = "MaxSize: Sized", deserialize = "MaxSize: Sized"))
 )]
 #[derive(scale_info_derive::TypeInfo)]
 #[scale_info(skip_type_params(MaxSize))]
 #[scale_info(omit_prefix)]
 pub struct BoundedBytes<MaxSize: Get<u32>>(
-	#[cfg_attr(feature = "serde", serde(with = "hex"))] pub BoundedVec<u8, MaxSize>,
+    #[cfg_attr(feature = "serde", serde(with = "hex"))] pub BoundedVec<u8, MaxSize>,
 );
 
 crate::impl_wrapper!(BoundedBytes<MaxSize: Get<u32>>(BoundedVec<u8, MaxSize>));
 
 impl<MaxSize: Get<u32>> TryFrom<Vec<u8>> for BoundedBytes<MaxSize> {
-	type Error = Vec<u8>;
+    type Error = Vec<u8>;
 
-	fn try_from(bytes: Vec<u8>) -> Result<Self, Vec<u8>> {
-		TryFrom::try_from(bytes).map(Self)
-	}
+    fn try_from(bytes: Vec<u8>) -> Result<Self, Vec<u8>> {
+        TryFrom::try_from(bytes).map(Self)
+    }
 }
 
 /// Wrapper around raw bytes vector providing the ability to encode/decode in `hex` format.
@@ -50,9 +50,9 @@ impl<MaxSize: Get<u32>> TryFrom<Vec<u8>> for BoundedBytes<MaxSize> {
 pub struct Bytes(#[cfg_attr(feature = "serde", serde(with = "hex"))] pub Vec<u8>);
 
 impl FromIterator<u8> for Bytes {
-	fn from_iter<I: IntoIterator<Item = u8>>(iter: I) -> Bytes {
-		Bytes(Vec::from_iter(iter))
-	}
+    fn from_iter<I: IntoIterator<Item = u8>>(iter: I) -> Bytes {
+        Bytes(Vec::from_iter(iter))
+    }
 }
 
 #[cfg(test)]
@@ -62,17 +62,17 @@ impl_wrapper! { Bytes(Vec<u8>), for rand use rand::distributions::Standard.sampl
 // XXX: This could have been a tuple struct. Keeping it a normal struct for Substrate UI
 /// A wrapper over 32-byte array
 #[derive(
-	Encode,
-	Decode,
-	Debug,
-	Clone,
-	PartialEq,
-	Eq,
-	Ord,
-	Copy,
-	PartialOrd,
-	MaxEncodedLen,
-	scale_info_derive::TypeInfo,
+    Encode,
+    Decode,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Ord,
+    Copy,
+    PartialOrd,
+    MaxEncodedLen,
+    scale_info_derive::TypeInfo,
 )]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[scale_info(omit_prefix)]
@@ -81,17 +81,17 @@ pub struct Bytes32(#[cfg_attr(feature = "serde", serde(with = "hex"))] pub [u8; 
 crate::impl_wrapper! { Bytes32([u8; 32]) }
 
 impl Index<RangeFull> for Bytes32 {
-	type Output = [u8; 32];
+    type Output = [u8; 32];
 
-	fn index(&self, _: RangeFull) -> &Self::Output {
-		&self.0
-	}
+    fn index(&self, _: RangeFull) -> &Self::Output {
+        &self.0
+    }
 }
 
 #[cfg(feature = "serde")]
 serde_big_array::big_array! {
-	BigArray;
-	33, 64, 65
+    BigArray;
+    33, 64, 65
 }
 
 // XXX: These could have been a tuple structs. Keeping them normal struct for Substrate UI

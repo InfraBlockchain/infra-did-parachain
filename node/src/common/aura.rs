@@ -24,45 +24,45 @@ use sp_runtime::app_crypto::{AppCrypto, AppPair, AppSignature, Pair};
 
 /// Convenience trait for defining the basic bounds of an `AuraId`.
 pub trait AuraIdT: AppCrypto<Pair = Self::BoundedPair> + Codec + Send {
-	/// Extra bounds for the `Pair`.
-	type BoundedPair: AppPair + AppCrypto<Signature = Self::BoundedSignature>;
+    /// Extra bounds for the `Pair`.
+    type BoundedPair: AppPair + AppCrypto<Signature = Self::BoundedSignature>;
 
-	/// Extra bounds for the `Signature`.
-	type BoundedSignature: AppSignature
-		+ TryFrom<Vec<u8>>
-		+ std::hash::Hash
-		+ sp_runtime::traits::Member
-		+ Codec;
+    /// Extra bounds for the `Signature`.
+    type BoundedSignature: AppSignature
+        + TryFrom<Vec<u8>>
+        + std::hash::Hash
+        + sp_runtime::traits::Member
+        + Codec;
 }
 
 impl<T> AuraIdT for T
 where
-	T: AppCrypto + Codec + Send + Sync,
-	<<T as AppCrypto>::Pair as AppCrypto>::Signature:
-		TryFrom<Vec<u8>> + std::hash::Hash + sp_runtime::traits::Member + Codec,
+    T: AppCrypto + Codec + Send + Sync,
+    <<T as AppCrypto>::Pair as AppCrypto>::Signature:
+        TryFrom<Vec<u8>> + std::hash::Hash + sp_runtime::traits::Member + Codec,
 {
-	type BoundedPair = <T as AppCrypto>::Pair;
-	type BoundedSignature = <<T as AppCrypto>::Pair as AppCrypto>::Signature;
+    type BoundedPair = <T as AppCrypto>::Pair;
+    type BoundedSignature = <<T as AppCrypto>::Pair as AppCrypto>::Signature;
 }
 
 /// Convenience trait for defining the basic bounds of a parachain runtime that supports
 /// the Aura consensus.
 pub trait AuraRuntimeApi<Block: BlockT, AuraId: AuraIdT>:
-	sp_api::ApiExt<Block>
-	+ AuraApi<Block, <AuraId::BoundedPair as Pair>::Public>
-	+ AuraUnincludedSegmentApi<Block>
-	+ Sized
+    sp_api::ApiExt<Block>
+    + AuraApi<Block, <AuraId::BoundedPair as Pair>::Public>
+    + AuraUnincludedSegmentApi<Block>
+    + Sized
 {
-	/// Check if the runtime has the Aura API.
-	fn has_aura_api(&self, at: Block::Hash) -> bool {
-		self.has_api::<dyn AuraApi<Block, <AuraId::BoundedPair as Pair>::Public>>(at)
-			.unwrap_or(false)
-	}
+    /// Check if the runtime has the Aura API.
+    fn has_aura_api(&self, at: Block::Hash) -> bool {
+        self.has_api::<dyn AuraApi<Block, <AuraId::BoundedPair as Pair>::Public>>(at)
+            .unwrap_or(false)
+    }
 }
 
 impl<T, Block: BlockT, AuraId: AuraIdT> AuraRuntimeApi<Block, AuraId> for T where
-	T: sp_api::ApiExt<Block>
-		+ AuraApi<Block, <AuraId::BoundedPair as Pair>::Public>
-		+ AuraUnincludedSegmentApi<Block>
+    T: sp_api::ApiExt<Block>
+        + AuraApi<Block, <AuraId::BoundedPair as Pair>::Public>
+        + AuraUnincludedSegmentApi<Block>
 {
 }
