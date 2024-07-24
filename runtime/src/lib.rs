@@ -35,7 +35,7 @@ use sp_version::RuntimeVersion;
 use frame_support::{
 	construct_runtime, derive_impl,
 	dispatch::DispatchClass,
-	genesis_builder_helper::{build_config, create_default_config},
+	genesis_builder_helper::{build_state, get_preset},
 	parameter_types,
 	traits::{
 		tokens::fungibles::{Balanced, Credit, UnionOf},
@@ -63,7 +63,7 @@ use infra_asset_common::{
 pub use sp_runtime::BuildStorage;
 
 // TODO: These constants are para-agnostic, but we need to configure for DID-chain specific constants
-use testnet_parachains_constants::infra_relay::{
+use testnet_parachains_constants::yosemite::{
 	consensus::*, currency::*, fee::WeightToFee, time::*,
 };
 
@@ -71,7 +71,7 @@ use testnet_parachains_constants::infra_relay::{
 use polkadot_runtime_common::{prod_or_fast, BlockHashCount, SlowAdjustingFeeUpdate};
 use weights::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight};
 
-pub use did_core::{
+pub use pallet_did::{
     accumulator, anchor, attest, blob, common, did,
     offchain_signatures::{self, BBSPlusPublicKey, OffchainPublicKey, PSPublicKey},
     revoke, status_list_credential, trusted_entity,
@@ -147,14 +147,14 @@ mod wasm_handlers {
 
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-    spec_name: create_runtime_str!("InfraBlockchain DID Parachain"),
-    impl_name: create_runtime_str!("InfraBlockchain DID Parachain"),
+    spec_name: create_runtime_str!("infra-did-yosemite"),
+    impl_name: create_runtime_str!("bcl-infra-did-yosemite"),
     authoring_version: 1,
     spec_version: 10_000,
     impl_version: 0,
     apis: RUNTIME_API_VERSIONS,
-    transaction_version: 13,
-    state_version: 10,
+    transaction_version: 1,
+    state_version: 1,
 };
 
 /// The version information used to identify this runtime when compiled natively.
@@ -424,7 +424,7 @@ parameter_types! {
 impl pallet_transaction_payment::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type OnChargeTransaction =
-        pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
+        pallet_transaction_payment::FungibleAdapter<Balances, DealWithFees<Runtime>>;
     type WeightToFee = WeightToFee;
     type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
     type FeeMultiplierUpdate = ();
@@ -507,9 +507,8 @@ impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
-pub type PriceForSiblingParachainDelivery = polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery<
-	cumulus_primitives_core::ParaId
->;
+pub type PriceForSiblingParachainDelivery =
+	polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery<cumulus_primitives_core::ParaId>;
 
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type WeightInfo = weights::cumulus_pallet_xcmp_queue::WeightInfo<Runtime>;
@@ -517,7 +516,11 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = InfraXcm;
 	type XcmpQueue = TransformOrigin<MessageQueue, AggregateMessageOrigin, ParaId, ParaIdToSibling>;
-	type MaxInboundSuspended = sp_core::ConstU32<1_000>;
+	type MaxInboundSuspended = ConstU32<1_000>;
+	type MaxActiveOutboundChannels = ConstU32<128>;
+	// Most on-chain HRMP channels are configured to use 102400 bytes of max message size, so we
+	// need to set the page size larger than that until we reduce the channel size on-chain.
+	type MaxPageSize = ConstU32<{ 103 * 1024 }>;
 	type ControllerOrigin = EnsureRoot<AccountId>;
 	type ControllerOriginConverter = xcm_config::XcmOriginToTransactDispatchOrigin;
 	type PriceForSiblingDelivery = PriceForSiblingParachainDelivery;
@@ -1108,13 +1111,16 @@ impl_runtime_apis! {
 	}
 
 	impl sp_genesis_builder::GenesisBuilder<Block> for Runtime {
-
-		fn create_default_config() -> Vec<u8> {
-			create_default_config::<RuntimeGenesisConfig>()
+		fn build_state(config: Vec<u8>) -> sp_genesis_builder::Result {
+			build_state::<RuntimeGenesisConfig>(config)
 		}
 
-		fn build_config(config: Vec<u8>) -> sp_genesis_builder::Result {
-			build_config::<RuntimeGenesisConfig>(config)
+		fn get_preset(id: &Option<sp_genesis_builder::PresetId>) -> Option<Vec<u8>> {
+			get_preset::<RuntimeGenesisConfig>(id, |_| None)
+		}
+
+		fn preset_names() -> Vec<sp_genesis_builder::PresetId> {
+			vec![]
 		}
 	}
 }

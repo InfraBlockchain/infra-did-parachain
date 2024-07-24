@@ -1,15 +1,186 @@
+[workspace.package]
+authors = ["Blockchain Labs"]
+edition = "2021"
+homepage = "https://www.infrablockchain.net/kr/tech/infrablockchain"
+license = "GPL-3.0-only"
+repository = "https://github.com/InfraBlockchain/infra-did-parachain"
+
+
 [workspace]
 members = [
-	"node",
-	"runtime",
+    "node",
+    "runtime",
+    "pallets/did",
 ]
 resolver = "2"
 
+[workspace.dependencies]
+
+# External
+wait-timeout = { version = "0.2" }
+tokio = { version = "1.37.0", default-features = false }
+tempfile = { version = "3.8.1" }
+assert_cmd = { version = "2.0.10" }
+nix = { version = "0.28.0" }
+async-trait = { version = "0.1.79" }
+bitflags = { version = "2.6.0" }
+clap = { version = "4.5.3" }
+codec = { version = "3.6.12", default-features = false, package = "parity-scale-codec" }
+color-print = { version = "0.3.4" }
+futures = { version = "0.3.30" }
+hex-literal = { version = "0.4.1", default-features = false }
+jsonrpsee = { version = "0.23.2" }
+libsecp256k1 = { version = "0.7.1", default-features = false }
+log = { version = "0.4.21", default-features = false }
+merlin = { version = "3.0.0", default-features = false }
+num-traits = { version = "0.2.19", default-features = false }
+rand = { version = "0.8.5", default-features = false }
+rand_chacha = { version = "0.3.1", default-features = false }
+scale-info = { version = "2.11.1", default-features = false }
+scale-info-derive = { git = "https://github.com/docknetwork/scale-info.git", branch = "master", default-features = false }
+schnorrkel = { version = "0.9.1", default-features = false }
+serde-big-array = { version = "0.3.0" }
+serde-hex = { version = "0.4.3", default-features = false, package = "hex" }
+serde_json = { version = "1.0.114", default-features = false }
+sha2 = { version = "0.10.8", default-features = false }
+smallvec = { version = "1.11.0", default-features = false }
+serde = { version = "1.0.197", default-features = false }
+
+# Core Module
+pallet-did = { path = "pallets/did", default-features = false }
+
+# Runtime
+infra-did-yosemite-runtime = { path = "runtime", default-features = false }
+
+# Substrate Utils
+substrate-frame-rpc-system = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+substrate-prometheus-endpoint = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+substrate-state-trie-migration-rpc = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+substrate-wasm-builder = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+substrate-build-script-utils = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+
+# FRAME
+frame-benchmarking = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+frame-benchmarking-cli = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+frame-executive = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+frame-support = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+frame-system = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+frame-system-benchmarking = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+frame-system-rpc-runtime-api = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+frame-try-runtime = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+
+# Pallets
+pallet-assets = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+pallet-aura = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+pallet-authorship = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+pallet-balances = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+pallet-message-queue = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+pallet-preimage = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+pallet-scheduler = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+pallet-session = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+pallet-sudo = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+pallet-system-token-conversion = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+pallet-system-token-tx-payment = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+pallet-timestamp = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+pallet-transaction-payment = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+pallet-transaction-payment-rpc = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+
+# FRAME Primitives
+sp-api = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-blockchain = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-keystore = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-timestamp = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-application-crypto = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-block-builder = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-consensus-aura = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-core = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-genesis-builder = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-inherents = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-io = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-offchain = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-runtime = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-session = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-std = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-storage = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-transaction-pool = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-version = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sp-weights = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+
+# FRAME Client
+sc-basic-authorship = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-chain-spec = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-client-api = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-consensus = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-finality-grandpa = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-service = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-cli = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-executor = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-network = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-network-sync = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-offchain = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-rpc = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-rpc-api = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-sysinfo = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-telemetry = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-tracing = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-transaction-pool = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+sc-transaction-pool-api = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+
+# InfraRelay
+polkadot-core-primitives = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+polkadot-parachain-primitives = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+polkadot-runtime-common = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+polkadot-runtime-parachains = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+polkadot-service = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+polkadot-primitives = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+polkadot-cli = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+
+# Yosemite(Testnet)
+yosemite-runtime-constants = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+
+# Xcm
+pallet-xcm = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+xcm = { package = "staging-xcm", git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+xcm-builder = { package = "staging-xcm-builder", git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+xcm-executor = { package = "staging-xcm-executor", git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+
+# InfraXCM
+infra-asset-common = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+
+# Cumulus
+cumulus-client-cli = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-client-collator = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-client-consensus-aura = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-client-consensus-common = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-client-consensus-proposer = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-client-consensus-relay-chain = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-client-parachain-inherent = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-primitives-parachain-inherent = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-relay-chain-interface = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-client-service = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-pallet-aura-ext = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-pallet-dmp-queue = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-pallet-infra-parachain-core = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-pallet-parachain-system = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-pallet-session-benchmarking = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-pallet-xcm = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-pallet-xcmp-queue = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-primitives-aura = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-primitives-core = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-primitives-timestamp = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+cumulus-primitives-utility = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+pallet-collator-selection = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+parachain-info = { package = "staging-parachain-info", git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+parachains-common = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+
+testnet-parachains-constants = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
+
 [profile.release]
-panic = "unwind"
 opt-level = 3
+panic = "unwind"
 
 [profile.production]
+codegen-units = 1
 inherits = "release"
 lto = true
-codegen-units = 1

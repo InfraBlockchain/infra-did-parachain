@@ -1,128 +1,125 @@
 [package]
-name = "infra-did-parachain-bin"
-version = "1.1.0"
-authors = ["blockchain labs"]
+authors.workspace = true
+edition.workspace = true
 build = "build.rs"
-edition = "2021"
-description = "Runs a infra-relay parachain node which could be a collator."
+description = "Run InfraDID-Yosemite node"
+name = "infra-did-yosemite-bin"
+version = "1.0.0"
 
 [[bin]]
-name = "infra-did-parachain"
+name = "infra-did-yosemite"
 path = "src/main.rs"
 
 [dependencies]
-async-trait = "0.1.73"
-clap = { version = "4.4.6", features = ["derive"] }
-codec = { package = "parity-scale-codec", version = "3.0.0" }
-futures = "0.3.28"
-hex-literal = "0.4.1"
-log = "0.4.20"
-serde = { version = "1.0.188", features = ["derive"] }
-serde_json = "1.0.107"
+async-trait = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+codec = { workspace = true }
+color-print = { workspace = true }
+futures = { workspace = true }
+hex-literal = { workspace = true, default-features = true }
+jsonrpsee = { workspace = true, features = ["server"] }
+log = { workspace = true, default-features = true }
+serde = { workspace = true, default-features = true, features = ["derive"] }
+serde_json = { workspace = true, default-features = true }
 
-# Local
-jsonrpsee = { version = "0.22", features = ["server"] }
-parachains-common = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-
-# parachains's runtimes
-infra-did-parachain-runtime = { path = "../runtime" }
+# Runtime
+infra-did-yosemite-runtime = { workspace = true, default-features = true }
 
 # Substrate
-frame-support = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-frame-benchmarking = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-frame-benchmarking-cli = { git = "https://github.com	/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sp-runtime = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0", default-features = false }
-sp-io = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sp-core = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sp-session = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-consensus = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-cli = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-client-api = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-executor = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-service = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-telemetry = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-transaction-pool = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sp-transaction-pool = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-network = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-network-sync = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-basic-authorship = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sp-std = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sp-inherents = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sp-version = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sp-timestamp = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sp-blockchain = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sp-block-builder = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sp-keystore = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sp-offchain = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sp-genesis-builder = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-chain-spec = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-rpc = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-tracing = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-offchain = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sp-api = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sp-consensus-aura = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-sysinfo = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-substrate-prometheus-endpoint = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-sc-transaction-pool-api = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-frame-rpc-system = { package = "substrate-frame-rpc-system", git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-frame-system-rpc-runtime-api = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-pallet-transaction-payment = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-pallet-transaction-payment-rpc-runtime-api = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-pallet-transaction-payment-rpc = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-substrate-state-trie-migration-rpc = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
+frame-benchmarking = { workspace = true, default-features = true }
+frame-benchmarking-cli = { workspace = true, default-features = true }
+frame-support = { workspace = true, default-features = true }
+frame-system-rpc-runtime-api = { workspace = true, default-features = true }
+pallet-transaction-payment = { workspace = true, default-features = true }
+pallet-transaction-payment-rpc = { workspace = true, default-features = true }
+pallet-transaction-payment-rpc-runtime-api = { workspace = true, default-features = true }
+sc-basic-authorship = { workspace = true, default-features = true }
+sc-chain-spec = { workspace = true, default-features = true }
+sc-cli = { workspace = true, default-features = true }
+sc-client-api = { workspace = true, default-features = true }
+sc-consensus = { workspace = true, default-features = true }
+sc-executor = { workspace = true, default-features = true }
+sc-network = { workspace = true, default-features = true }
+sc-network-sync = { workspace = true, default-features = true }
+sc-offchain = { workspace = true, default-features = true }
+sc-rpc = { workspace = true, default-features = true }
+sc-service = { workspace = true, default-features = true }
+sc-sysinfo = { workspace = true, default-features = true }
+sc-telemetry = { workspace = true, default-features = true }
+sc-tracing = { workspace = true, default-features = true }
+sc-transaction-pool = { workspace = true, default-features = true }
+sc-transaction-pool-api = { workspace = true, default-features = true }
+sp-api = { workspace = true, default-features = true }
+sp-block-builder = { workspace = true, default-features = true }
+sp-blockchain = { workspace = true, default-features = true }
+sp-consensus-aura = { workspace = true, default-features = true }
+sp-core = { workspace = true, default-features = true }
+sp-genesis-builder = { workspace = true, default-features = true }
+sp-inherents = { workspace = true, default-features = true }
+sp-io = { workspace = true, default-features = true }
+sp-keystore = { workspace = true, default-features = true }
+sp-offchain = { workspace = true, default-features = true }
+sp-runtime = { workspace = true, default-features = false }
+sp-session = { workspace = true, default-features = true }
+sp-std = { workspace = true, default-features = true }
+sp-timestamp = { workspace = true, default-features = true }
+sp-transaction-pool = { workspace = true, default-features = true }
+sp-version = { workspace = true, default-features = true }
+substrate-frame-rpc-system = { workspace = true, default-features = true }
+substrate-prometheus-endpoint = { workspace = true, default-features = true }
+substrate-state-trie-migration-rpc = { workspace = true, default-features = true }
 
-# Infra Relay
-polkadot-cli = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0", features = ["infra-relay-native",] }
-polkadot-primitives = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-polkadot-service = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-xcm = { package = "staging-xcm", git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
+# InfraRelay
+polkadot-cli = { workspace = true, default-features = true, features = ["yosemite-native"] }
+polkadot-primitives = { workspace = true, default-features = true }
+polkadot-service = { workspace = true, default-features = true }
+xcm = { workspace = true, default-features = true }
 
 # Cumulus
-cumulus-client-cli = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-cumulus-client-collator = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-cumulus-client-consensus-aura = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-cumulus-client-consensus-relay-chain = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-cumulus-client-consensus-common = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-cumulus-client-consensus-proposer = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-cumulus-client-service = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-cumulus-client-parachain-inherent = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-cumulus-primitives-aura = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-cumulus-primitives-core = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-cumulus-primitives-parachain-inherent = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-cumulus-relay-chain-interface = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
+cumulus-client-cli = { workspace = true, default-features = true }
+cumulus-client-collator = { workspace = true, default-features = true }
+cumulus-client-consensus-aura = { workspace = true, default-features = true }
+cumulus-client-consensus-common = { workspace = true, default-features = true }
+cumulus-client-consensus-proposer = { workspace = true, default-features = true }
+cumulus-client-consensus-relay-chain = { workspace = true, default-features = true }
+cumulus-client-parachain-inherent = { workspace = true, default-features = true }
+cumulus-client-service = { workspace = true, default-features = true }
+cumulus-primitives-aura = { workspace = true, default-features = true }
+cumulus-primitives-core = { workspace = true, default-features = true }
+cumulus-primitives-parachain-inherent = { workspace = true, default-features = true }
+cumulus-relay-chain-interface = { workspace = true, default-features = true }
+parachains-common = { workspace = true, default-features = true }
 
-testnet-parachains-constants = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
-
-color-print = "0.3.4"
+testnet-parachains-constants = { workspace = true, default-features = true }
 
 [build-dependencies]
-substrate-build-script-utils = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch ="feature/release-1.10.0" }
+substrate-build-script-utils = { workspace = true, default-features = true }
 
 
 [dev-dependencies]
-assert_cmd = "2.0"
-nix = { version = "0.26.1", features = ["signal"] }
-tempfile = "3.8.0"
-tokio = { version = "1.32.0", features = ["macros", "time", "parking_lot"] }
-wait-timeout = "0.2"
+assert_cmd = { workspace = true }
+nix = { workspace = true, features = ["signal"] }
+tempfile = { workspace = true }
+tokio = { workspace = true, default-features = true, features = ["macros", "time", "parking_lot"] }
+wait-timeout = { workspace = true }
 
 [features]
 default = []
+fast-runtime = [
+    "infra-did-yosemite-runtime/fast-runtime",
+]
 runtime-benchmarks = [
-	"frame-benchmarking-cli/runtime-benchmarks",
-	"frame-benchmarking/runtime-benchmarks",
-	"parachains-common/runtime-benchmarks",
-	"polkadot-cli/runtime-benchmarks",
-	"polkadot-primitives/runtime-benchmarks",
-	"polkadot-service/runtime-benchmarks",
-	"sc-service/runtime-benchmarks",
-	"sp-runtime/runtime-benchmarks",
+    "frame-benchmarking-cli/runtime-benchmarks",
+    "frame-benchmarking/runtime-benchmarks",
+    "parachains-common/runtime-benchmarks",
+    "polkadot-cli/runtime-benchmarks",
+    "polkadot-primitives/runtime-benchmarks",
+    "polkadot-service/runtime-benchmarks",
+    "sc-service/runtime-benchmarks",
+    "sp-runtime/runtime-benchmarks",
 ]
 try-runtime = [
-	"polkadot-cli/try-runtime",
-	"polkadot-service/try-runtime",
-	"sp-runtime/try-runtime",
-]
-fast-runtime = [
-	"infra-did-parachain-runtime/fast-runtime",
+    "polkadot-cli/try-runtime",
+    "polkadot-service/try-runtime",
+    "sp-runtime/try-runtime",
 ]
