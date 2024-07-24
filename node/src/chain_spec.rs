@@ -23,12 +23,11 @@ use serde::{Deserialize, Serialize};
 use sp_core::{crypto::UncheckedInto, sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
-/// Specialized `ChainSpec` for the normal parachain runtime.
-pub type InfraDIDChainSpec = sc_service::GenericChainSpec<(), Extensions>;
+pub type GenericChainSpec = sc_service::GenericChainSpec<Extensions>;
 
-const INFRA_RELAY_ED: InfraDIDBalance = testnet_parachains_constants::infra_relay::currency::EXISTENTIAL_DEPOSIT;
+const INFRA_RELAY_ED: InfraDIDBalance = testnet_parachains_constants::yosemite::currency::EXISTENTIAL_DEPOSIT;
 
-const INFRA_DID_PARACHAIN_ID: u32 = 1002;
+const PARACHAIN_ID: u32 = 1005;
 
 const SAFE_XCM_VERSION: u32 = xcm::prelude::XCM_VERSION;
 
@@ -76,22 +75,22 @@ type AccountPublic = <Signature as Verify>::Signer;
 /// Generate the session keys from individual elements.
 ///
 /// The input must be a tuple of individual keys (a single arg for now since we have just one key).
-pub fn session_keys(keys: AuraId) -> infra_did_parachain_runtime::SessionKeys {
-    infra_did_parachain_runtime::SessionKeys { aura: keys }
+pub fn session_keys(keys: AuraId) -> infra_did_yosemite_runtime::SessionKeys {
+    infra_did_yosemite_runtime::SessionKeys { aura: keys }
 }
 
-pub fn development_config() -> InfraDIDChainSpec {
+pub fn development_config() -> GenericChainSpec {
     let mut properties = sc_chain_spec::Properties::new();
     properties.insert("ss58Format".into(), 42.into());
     properties.insert("tokenSymbol".into(), "DIDEV".into());
     properties.insert("tokenDecimals".into(), 9.into());
 
-    InfraDIDChainSpec::builder(
-        infra_did_parachain_runtime::WASM_BINARY.expect("WASM binary was not built for `InfraDID`"),
-        Extensions { relay_chain: "infra-relay".into(), para_id: INFRA_DID_PARACHAIN_ID }
+    GenericChainSpec::builder(
+        infra_did_yosemite_runtime::WASM_BINARY.expect("WASM binary was not built for `InfraDID`"),
+        Extensions { relay_chain: "yosemite-dev".into(), para_id: PARACHAIN_ID }
     )
-    .with_name("InfraBlockchain DID Chain Dev")
-	.with_id("did-hub-infra-dev")
+    .with_name("InfraDID Development")
+	.with_id("infra-did-yosemite-dev")
 	.with_chain_type(ChainType::Development)
     .with_genesis_config_patch(
         infra_did_genesis(
@@ -108,25 +107,25 @@ pub fn development_config() -> InfraDIDChainSpec {
             ], // endowed_accounts
             INFRA_RELAY_ED * 4096,
             Some(get_account_id_from_seed::<sr25519::Public>("Alice")),             // root_key
-            INFRA_DID_PARACHAIN_ID.into(),                                                            // para_id
+            PARACHAIN_ID.into(),                                                            // para_id
         )
     )
     .with_properties(properties)
 	.build()
 }
 
-pub fn testnet_config() -> InfraDIDChainSpec {
+pub fn testnet_config() -> GenericChainSpec {
     let mut properties = sc_chain_spec::Properties::new();
     properties.insert("ss58Format".into(),42.into());
     properties.insert("tokenSymbol".into(), "DIDTEST".into());
     properties.insert("tokenDecimals".into(), 9.into());
 
-    InfraDIDChainSpec::builder(
-        infra_did_parachain_runtime::WASM_BINARY.expect("WASM binary was not built for `InfraDID`"),
-        Extensions { relay_chain: "infra-relay".into(), para_id: INFRA_DID_PARACHAIN_ID }
+    GenericChainSpec::builder(
+        infra_did_yosemite_runtime::WASM_BINARY.expect("WASM binary was not built for `InfraDID`"),
+        Extensions { relay_chain: "yosemite-local".into(), para_id: PARACHAIN_ID }
     )
-    .with_name("InfraBlockchain DID Chain Testnet")
-	.with_id("did-hub-infra-testnet")
+    .with_name("InfraDID Testnet")
+	.with_id("infra-did-yosemite-testnet")
 	.with_chain_type(ChainType::Local)
     .with_genesis_config_patch(
         infra_did_genesis(
@@ -157,7 +156,7 @@ pub fn testnet_config() -> InfraDIDChainSpec {
             ], // endowed_accounts
             INFRA_RELAY_ED * 4096,
             Some(get_account_id_from_seed::<sr25519::Public>("Alice")),             // root_key
-            INFRA_DID_PARACHAIN_ID.into(),                                                            // para_id
+            PARACHAIN_ID.into(),                                                            // para_id
         )
     )
     .with_properties(properties)
@@ -165,18 +164,18 @@ pub fn testnet_config() -> InfraDIDChainSpec {
 }
 
 // Not used for syncing, but just to determine the genesis values set for the upgrade from shell.
-pub fn mainnet_config() -> InfraDIDChainSpec {
+pub fn mainnet_config() -> GenericChainSpec {
     let mut properties = sc_chain_spec::Properties::new();
     properties.insert("ss58Format".into(), 42.into());
     properties.insert("tokenSymbol".into(), "DIDMAIN".into());
     properties.insert("tokenDecimals".into(), 9.into());
 
-    InfraDIDChainSpec::builder(
-        infra_did_parachain_runtime::WASM_BINARY.expect("WASM binary was not built for `InfraDID`"),
-        Extensions { relay_chain: "infra-relay".into(), para_id: INFRA_DID_PARACHAIN_ID }
+    GenericChainSpec::builder(
+        infra_did_yosemite_runtime::WASM_BINARY.expect("WASM binary was not built for `InfraDID`"),
+        Extensions { relay_chain: "yosemite".into(), para_id: PARACHAIN_ID }
     )
-    .with_name("InfraBlockchain DID Chain Mainnet")
-	.with_id("did-hub-infra")
+    .with_name("InfraDID Mainnet")
+	.with_id("infra-did-yosemite-mainnet")
 	.with_chain_type(ChainType::Live)
     .with_genesis_config_patch(
         infra_did_genesis(
@@ -210,7 +209,7 @@ pub fn mainnet_config() -> InfraDIDChainSpec {
             Default::default(), // endowed_accounts
             Default::default(),
             None,             // root_key
-            INFRA_DID_PARACHAIN_ID.into(),                                                            // para_id
+            PARACHAIN_ID.into(),                                                            // para_id
         )
     )
     .with_properties(properties)
@@ -225,38 +224,38 @@ fn infra_did_genesis(
     id: ParaId,
 ) -> serde_json::Value {
     serde_json::json!({
-        "balances": infra_did_parachain_runtime::BalancesConfig {
+        "balances": infra_did_yosemite_runtime::BalancesConfig {
             balances: endowed_accounts
                 .iter()
                 .cloned()
                 .map(|k| (k, endowment))
                 .collect(),
         },
-        "parachainInfo": infra_did_parachain_runtime::ParachainInfoConfig {
+        "parachainInfo": infra_did_yosemite_runtime::ParachainInfoConfig {
             parachain_id: id,
             ..Default::default()
         },
-        "collatorSelection": infra_did_parachain_runtime::CollatorSelectionConfig {
+        "collatorSelection": infra_did_yosemite_runtime::CollatorSelectionConfig {
             invulnerables: invulnerables.iter().cloned().map(|(acc, _)| acc).collect(),
             candidacy_bond: INFRA_RELAY_ED * 16,
             ..Default::default()
         },
-        "session": infra_did_parachain_runtime::SessionConfig {
+        "session": infra_did_yosemite_runtime::SessionConfig {
             keys: invulnerables
                 .into_iter()
                 .map(|(acc, aura)| {
                     (
-                        acc.clone(),                         // account id
-                        acc,                                 // validator id
-                        session_keys(aura), // session keys
+                        acc.clone(),                       
+                        acc,                                
+                        session_keys(aura), 
                     )
                 })
                 .collect(),
         },
-        "infraXcm": infra_did_parachain_runtime::InfraXcmConfig {
+        "infraXcm": infra_did_yosemite_runtime::InfraXcmConfig {
   safe_xcm_version: Some(SAFE_XCM_VERSION),
         ..Default::default()
         },
-        "sudo": infra_did_parachain_runtime::SudoConfig { key: root_key }
+        "sudo": infra_did_yosemite_runtime::SudoConfig { key: root_key }
     })
 }

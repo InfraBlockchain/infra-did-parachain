@@ -15,10 +15,10 @@
 // along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
 
 use crate::{
-	chain_spec,
+	chain_spec::{self, GenericChainSpec},
 	cli::{Cli, RelayChainCli, Subcommand},
 	fake_runtime_api::{asset_hub_polkadot_aura::RuntimeApi as AssetHubPolkadotRuntimeApi, aura::RuntimeApi},
-	service::{new_partial, Block},
+	service::{new_partial, Block, Hash},
 };
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
@@ -34,11 +34,12 @@ use std::net::SocketAddr;
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
     Ok(match id {
-        "infra-did-dev" | "dev" | "" => Box::new(chain_spec::development_config()),
-        "infra-did-testnet" => Box::new(chain_spec::testnet_config()),
-        "infra-did-mainnet" => Box::new(chain_spec::mainnet_config()),
+        "infra-did-yosemite-dev" | "dev" => Box::new(chain_spec::development_config()),
+        "infra-did-yosemite-local-testnet" => Box::new(chain_spec::testnet_config()),
+        "infra-did-yosemite-staging-testnet" => Box::new(chain_spec::testnet_config()),
+        "infra-did-yosemite-mainnet" => Box::new(chain_spec::mainnet_config()),
         // -- Loading a specific spec from disk
-        path => Box::new(chain_spec::InfraDIDChainSpec::from_json_file(
+        path => Box::new(GenericChainSpec::from_json_file(
             std::path::PathBuf::from(path),
         )?),
     })
@@ -46,7 +47,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn ChainSpec>, String> {
 
 impl SubstrateCli for Cli {
     fn impl_name() -> String {
-        "InfraBlockchain DID Parachain".into()
+        "InfraDID Parachain".into()
     }
 
     fn impl_version() -> String {
@@ -55,7 +56,7 @@ impl SubstrateCli for Cli {
 
     fn description() -> String {
         format!(
-            "InfraBlockchain DID Parachain\n\nThe command-line arguments provided first will be \
+            "InfraDID Parachain\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
 		{} [parachain-args] -- [relaychain-args]",
@@ -82,7 +83,7 @@ impl SubstrateCli for Cli {
 
 impl SubstrateCli for RelayChainCli {
     fn impl_name() -> String {
-        "InfraBlockchain DID Parachain".into()
+        "InfraDID Parachain".into()
     }
 
     fn impl_version() -> String {
@@ -91,7 +92,7 @@ impl SubstrateCli for RelayChainCli {
 
     fn description() -> String {
         format!(
-            "InfraBlockchain DID Parachain\n\nThe command-line arguments provided first will be \
+            "InfraDID Parachain\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relay chain node.\n\n\
 		{} [parachain-args] -- [relay_chain-args]",
@@ -277,7 +278,7 @@ pub fn run() -> Result<()> {
 					AccountIdConversion::<polkadot_primitives::AccountId>::into_account_truncating(&id);
 
 				let tokio_handle = config.tokio_handle.clone();
-				let infra_relay_config =
+				let polkadot_config =
 					SubstrateCli::create_configuration(&infra_relay_cli, &infra_relay_cli, tokio_handle)
 						.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
@@ -285,16 +286,46 @@ pub fn run() -> Result<()> {
 				info!("Parachain Account: {}", parachain_account);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				crate::service::start_asset_hub_lookahead_node::<
-				AssetHubPolkadotRuntimeApi,
-					AuraId,
-				>(config, infra_relay_config, collator_options, id, hwbench)
-				.await
-				.map(|r| r.0)
-				.map_err(Into::into)
+				match config.network.network_backend {
+                    sc_network::config::NetworkBackendType::Libp2p => 
+                        start_node::<sc_network::NetworkWorker<_, _>>(
+                            config,
+                            polkadot_config,
+                            collator_options,
+                            id,
+                            hwbench,
+                        )
+                        .await,
+                    sc_network::config::NetworkBackendType::Litep2p => 
+                        start_node::<sc_network::Litep2pNetworkBackend>(
+                            config,
+                            polkadot_config,
+                            collator_options,
+                            id,
+                            hwbench,
+                        )
+                        .await
+                }
 			})
 		},
 	}
+}
+
+async fn start_node<Network: sc_network::NetworkBackend<Block, Hash>>(
+    config: sc_service::Configuration,
+	polkadot_config: sc_service::Configuration,
+	collator_options: cumulus_client_cli::CollatorOptions,
+	id: ParaId,
+	hwbench: Option<sc_sysinfo::HwBench>,
+) -> Result<sc_service::TaskManager>{
+    crate::service::start_lookahead_node::<
+        AssetHubPolkadotRuntimeApi,
+        AuraId,
+        Network
+    >(config, polkadot_config, collator_options, id, hwbench)
+    .await
+    .map(|r| r.0)
+    .map_err(Into::into)
 }
 
 impl DefaultConfigurationValues for RelayChainCli {

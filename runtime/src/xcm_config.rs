@@ -99,6 +99,7 @@ pub type ForeignAssetsConvertedConcreteId = infra_asset_common::ForeignAssetsCon
 		//   be accepted here
 		StartsWithExplicitGlobalConsensus<UniversalLocationNetworkId>,
 	),
+	Location, 
 	Balance,
 >;
 
@@ -206,7 +207,6 @@ impl Contains<RuntimeCall> for SafeCallFilter {
 				ForeignAssetsCall::transfer { .. } |
 				ForeignAssetsCall::transfer_keep_alive { .. } |
 				ForeignAssetsCall::force_transfer { .. } |
-				ForeignAssetsCall::force_transfer2 { .. } |
 				ForeignAssetsCall::freeze { .. } |
 				ForeignAssetsCall::thaw { .. } |
 				ForeignAssetsCall::freeze_asset { .. } |
@@ -316,6 +316,7 @@ impl xcm_executor::Config for XcmConfig {
 	type HrmpNewChannelOpenRequestHandler = ();
 	type HrmpChannelAcceptedHandler = ();
 	type HrmpChannelClosingHandler = ();
+	type XcmRecorder = InfraXcm;
 }
 
 /// Converts a local signed origin into an XCM multilocation.
