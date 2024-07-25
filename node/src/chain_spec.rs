@@ -83,7 +83,7 @@ pub fn session_keys(keys: AuraId) -> infra_did_yosemite_runtime::SessionKeys {
 pub fn development_config() -> GenericChainSpec {
     let mut properties = sc_chain_spec::Properties::new();
     properties.insert("ss58Format".into(), 42.into());
-    properties.insert("tokenSymbol".into(), "DIDEV".into());
+    properties.insert("tokenSymbol".into(), "BCL".into());
     properties.insert("tokenDecimals".into(), 9.into());
 
     GenericChainSpec::builder(
@@ -93,7 +93,7 @@ pub fn development_config() -> GenericChainSpec {
             para_id: PARACHAIN_ID,
         },
     )
-    .with_name("InfraDID Development")
+    .with_name("InfraDID Yosemite Development")
     .with_id("infra-did-yosemite-dev")
     .with_chain_type(ChainType::Development)
     .with_genesis_config_patch(infra_did_genesis(
@@ -119,7 +119,7 @@ pub fn development_config() -> GenericChainSpec {
 pub fn testnet_config() -> GenericChainSpec {
     let mut properties = sc_chain_spec::Properties::new();
     properties.insert("ss58Format".into(), 42.into());
-    properties.insert("tokenSymbol".into(), "DIDTEST".into());
+    properties.insert("tokenSymbol".into(), "BCL".into());
     properties.insert("tokenDecimals".into(), 9.into());
 
     GenericChainSpec::builder(
@@ -129,7 +129,7 @@ pub fn testnet_config() -> GenericChainSpec {
             para_id: PARACHAIN_ID,
         },
     )
-    .with_name("InfraDID Testnet")
+    .with_name("InfraDID Yosemite Testnet")
     .with_id("infra-did-yosemite-testnet")
     .with_chain_type(ChainType::Local)
     .with_genesis_config_patch(infra_did_genesis(
@@ -170,7 +170,7 @@ pub fn testnet_config() -> GenericChainSpec {
 pub fn mainnet_config() -> GenericChainSpec {
     let mut properties = sc_chain_spec::Properties::new();
     properties.insert("ss58Format".into(), 42.into());
-    properties.insert("tokenSymbol".into(), "DIDMAIN".into());
+    properties.insert("tokenSymbol".into(), "BCL".into());
     properties.insert("tokenDecimals".into(), 9.into());
 
     GenericChainSpec::builder(
