@@ -488,7 +488,7 @@ parameter_types! {
 }
 
 parameter_types! {
-    pub const ActiveRequestPeriod: u32 = 100;
+    pub const ActiveRequestPeriod: u32 = DAYS;
 }
 
 impl cumulus_pallet_infra_parachain_core::Config for Runtime {
