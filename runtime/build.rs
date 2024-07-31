@@ -1,9 +1,15 @@
-use substrate_wasm_builder::WasmBuilder;
 
+#[cfg(feature = "std")]
 fn main() {
-    WasmBuilder::new()
-        .with_current_project()
-        .export_heap_base()
-        .import_memory()
-        .build()
+    substrate_wasm_builder::WasmBuilder::build_using_defaults();
 }
+
+#[cfg(all(feature = "metadata-hash", feature = "std"))]
+fn main() {
+	substrate_wasm_builder::WasmBuilder::init_with_defaults()
+		.enable_metadata_hash("BCL", 12)
+		.build();
+}
+
+#[cfg(not(feature = "std"))]
+fn main() {}

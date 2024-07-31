@@ -1,18 +1,17 @@
 [package]
+name = "infra-did-yosemite-runtime"
+version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
 license.workspace = true
-name = "infra-did-yosemite-runtime"
-publish = false
 repository.workspace = true
-version = "1.0.0"
+publish = false
 
 [dependencies]
 codec = { workspace = true }
 log = { workspace = true }
-scale-info = { workspace = true }
-smallvec = { workspace = true, default-features = true }
+scale-info = { workspace = true, features = ["derive"] }
 
 # Core
 pallet-did = { workspace = true, features = ["serde"] }
@@ -67,7 +66,7 @@ yosemite-runtime-constants = { workspace = true }
 
 # Xcm
 pallet-xcm = { workspace = true }
-xcm = { package = "staging-xcm", workspace = true }
+xcm = { workspace = true }
 xcm-builder = { workspace = true }
 xcm-executor = { workspace = true }
 
@@ -94,7 +93,7 @@ testnet-parachains-constants = { workspace = true, features = ["yosemite"] }
 hex-literal = { workspace = true }
 
 [build-dependencies]
-substrate-wasm-builder = { workspace = true, default-features = true }
+substrate-wasm-builder = { workspace = true, default-features = true, optional = true }
 
 [features]
 default = ["std"]
@@ -106,6 +105,7 @@ std = [
     "cumulus-pallet-dmp-queue/std",
     "cumulus-pallet-parachain-system/std",
     "cumulus-pallet-infra-parachain-core/std",
+    "cumulus-pallet-session-benchmarking/std",
     "cumulus-pallet-xcm/std",
     "cumulus-pallet-xcmp-queue/std",
     "cumulus-primitives-aura/std",
@@ -118,19 +118,19 @@ std = [
     "frame-system-rpc-runtime-api/std",
     "frame-system/std",
     "frame-system-benchmarking/std",
-    "pallet-scheduler/std",
-    "pallet-preimage/std",
-    "pallet-assets/std",
     "frame-benchmarking?/std",
     "frame-try-runtime/std",
-    "pallet-system-token-tx-payment/std",
-    "pallet-system-token-conversion/std",
+    "pallet-assets/std",
     "pallet-aura/std",
     "pallet-authorship/std",
     "pallet-balances/std",
     "pallet-message-queue/std",
-    "pallet-collator-selection/std",
+    "pallet-preimage/std",
+    "pallet-scheduler/std",
     "pallet-session/std",
+    "pallet-system-token-tx-payment/std",
+    "pallet-system-token-conversion/std",
+    "pallet-collator-selection/std",
     "pallet-sudo/std",
     "pallet-timestamp/std",
     "pallet-transaction-payment-rpc-runtime-api/std",
@@ -147,6 +147,7 @@ std = [
     "sp-block-builder/std",
     "sp-consensus-aura/std",
     "sp-core/std",
+    "sp-genesis-builder/std",
     "sp-inherents/std",
     "sp-offchain/std",
     "sp-runtime/std",
@@ -161,6 +162,7 @@ std = [
     "xcm/std",
     "infra-asset-common/std",
     "parachains-common/std",
+    "substrate-wasm-builder"
 ]
 
 runtime-benchmarks = [

@@ -1,16 +1,16 @@
 [package]
+name = "pallet-did"
+version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
-name = "pallet-did"
-version = "0.1.0"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 bitflags = { workspace = true }
-codec = { workspace = true }
+codec = { workspace = true, features = ["derive"] }
 frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
@@ -18,7 +18,7 @@ hex-literal = { workspace = true, optional = true }
 num-traits = { workspace = true }
 scale-info = { workspace = true, features = ["derive", "serde"] }
 scale-info-derive = { workspace = true }
-serde = { workspace = true, features = ["derive", "alloc"] }
+serde = { workspace = true, features = ["derive", "alloc"], default-features = true }
 serde-big-array = { workspace = true, optional = true }
 serde-hex = { workspace = true, features = ["serde"], optional = true }
 sp-api = { workspace = true }
@@ -64,6 +64,7 @@ std = [
     "num-traits/std",
     "libsecp256k1/std",
     "scale-info/std",
+    "hex-literal",
 ]
 
 # Serde support without relying on std features.

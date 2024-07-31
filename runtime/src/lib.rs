@@ -5,6 +5,24 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+
+#[cfg(not(feature = "std"))]
+mod wasm_handlers {
+    #[panic_handler]
+    #[no_mangle]
+    pub fn panic(info: &core::panic::PanicInfo) -> ! {
+        let message = sp_std::alloc::format!("{}", info);
+        log::error!("{}", message);
+        ::core::arch::wasm32::unreachable();
+    }
+
+    #[alloc_error_handler]
+    pub fn oom(_: core::alloc::Layout) -> ! {
+        log::error!("Runtime memory exhausted. Aborting");
+        ::core::arch::wasm32::unreachable();
+    }
+}
+
 mod weights;
 pub mod xcm_config;
 use cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
@@ -122,24 +140,6 @@ pub type Executive = frame_executive::Executive<
 impl_opaque_keys! {
     pub struct SessionKeys {
         pub aura: Aura,
-    }
-}
-
-#[cfg(not(feature = "std"))]
-mod wasm_handlers {
-    #[panic_handler]
-    #[no_mangle]
-    pub fn panic(info: &core::panic::PanicInfo) -> ! {
-        let message = sp_std::alloc::format!("{}", info);
-        log::error!("{}", message);
-        ::core::arch::wasm32::unreachable();
-    }
-
-    #[cfg(enable_alloc_error_handler)]
-    #[alloc_error_handler]
-    pub fn oom(_: core::alloc::Layout) -> ! {
-        log::error!("Runtime memory exhausted. Aborting");
-        ::core::arch::wasm32::unreachable();
     }
 }
 
@@ -721,53 +721,51 @@ impl attest::Config for Runtime {}
 construct_runtime!(
     pub enum Runtime {
         // System support stuff.
-        System: frame_system::{Pallet, Call, Config<T>, Storage, Event<T>} = 0,
-        ParachainSystem: cumulus_pallet_parachain_system::{
-            Pallet, Call, Config<T>, Storage, Inherent, Event<T>, ValidateUnsigned,
-        } = 1,
-        InfraParaCore: cumulus_pallet_infra_parachain_core::{Pallet, Call, Storage, Event<T>} = 2,
-        Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 3,
-        ParachainInfo: parachain_info::{Pallet, Storage, Config<T>} = 4,
+        System: frame_system = 0,
+        ParachainSystem: cumulus_pallet_parachain_system = 1,
+        InfraParaCore: cumulus_pallet_infra_parachain_core = 2,
+        Timestamp: pallet_timestamp = 3,
+        ParachainInfo: parachain_info = 4,
 
         // Monetary stuff.
-        Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 10,
-        TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>} = 11,
-        SystemTokenTxPayment: pallet_system_token_tx_payment::{Pallet, Event<T>} = 12,
-        SystemTokenConversion: pallet_system_token_conversion::{Pallet, Event<T>} = 13,
+        Balances: pallet_balances = 10,
+        TransactionPayment: pallet_transaction_payment = 11,
+        SystemTokenTxPayment: pallet_system_token_tx_payment = 12,
+        SystemTokenConversion: pallet_system_token_conversion = 13,
 
         // Collator support. the order of these 5 are important and shall not change.
-        Authorship: pallet_authorship::{Pallet, Storage} = 20,
-        CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
-        Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 22,
-        Aura: pallet_aura::{Pallet, Storage, Config<T>} = 23,
-        AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config<T>} = 24,
+        Authorship: pallet_authorship = 20,
+        CollatorSelection: pallet_collator_selection = 21,
+        Session: pallet_session = 22,
+        Aura: pallet_aura = 23,
+        AuraExt: cumulus_pallet_aura_ext = 24,
 
         // XCM helpers.
-        XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 30,
-        InfraXcm: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin, Config<T>} = 31,
-        CumulusXcm: cumulus_pallet_xcm::{Pallet, Event<T>, Origin} = 32,
+        XcmpQueue: cumulus_pallet_xcmp_queue = 30,
+        InfraXcm: pallet_xcm = 31,
+        CumulusXcm: cumulus_pallet_xcm = 32,
         MessageQueue: pallet_message_queue = 33,
 
         // Governance
-        Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>, HoldReason} = 40,
-        Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 41,
+        Preimage: pallet_preimage = 40,
+        Scheduler: pallet_scheduler = 41,
 
         // Assets
-        Assets: pallet_assets::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 50,
-        ForeignAssets: pallet_assets::<Instance2>::{Pallet, Call, Storage, Event<T>, Config<T>} = 51,
+        Assets: pallet_assets::<Instance1> = 50,
+        ForeignAssets: pallet_assets::<Instance2> = 51,
 
         // DID.
-        DIDModule: did::{Pallet, Call, Storage, Event<T>, Config<T>} = 61,
-        Revoke: revoke::{Pallet, Call, Storage, Event} = 62,
-        BlobStore: blob::{Pallet, Call, Storage} = 63,
-        Anchor: anchor::{Pallet, Call, Storage, Event<T>} = 64,
-        Attest: attest::{Pallet, Call, Storage} = 65,
-        Accumulator: accumulator::{Pallet, Call, Storage, Event} = 66,
-        OffchainSignatures: offchain_signatures::{Pallet, Call, Storage, Event} = 67,
-        StatusListCredential: status_list_credential::{Pallet, Call, Storage, Event} = 68,
-        TrustedEntity: trusted_entity::{Pallet, Call, Storage, Event} = 69,
+        DIDModule: did = 61,
+        Revoke: revoke = 62,
+        BlobStore: blob = 63,
+        Anchor: anchor = 64,
+        Attest: attest = 65,
+        Accumulator: accumulator = 66,
+        OffchainSignatures: offchain_signatures = 67,
+        StatusListCredential: status_list_credential = 68,
+        TrustedEntity: trusted_entity = 69,
 
-        Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>} = 99,
+        Sudo: pallet_sudo = 99,
     }
 );
 

@@ -5,7 +5,6 @@ homepage = "https://www.infrablockchain.net/kr/tech/infrablockchain"
 license = "GPL-3.0-only"
 repository = "https://github.com/InfraBlockchain/infra-did-parachain"
 
-
 [workspace]
 members = [
     "node",
@@ -18,18 +17,19 @@ resolver = "2"
 
 # External
 wait-timeout = { version = "0.2" }
-tokio = { version = "1.37.0", default-features = false }
 tempfile = { version = "3.8.1" }
 assert_cmd = { version = "2.0.10" }
 nix = { version = "0.28.0" }
 async-trait = { version = "0.1.79" }
 bitflags = { version = "2.6.0" }
 clap = { version = "4.5.3" }
-codec = { version = "3.6.12", default-features = false, package = "parity-scale-codec" }
 color-print = { version = "0.3.4" }
 futures = { version = "0.3.30" }
-hex-literal = { version = "0.4.1", default-features = false }
+serde-big-array = { version = "0.3.0" }
 jsonrpsee = { version = "0.23.2" }
+tokio = { version = "1.37.0", default-features = false }
+codec = { package = "parity-scale-codec", version = "3.6.12", default-features = false }
+hex-literal = { version = "0.4.1", default-features = false }
 libsecp256k1 = { version = "0.7.1", default-features = false }
 log = { version = "0.4.21", default-features = false }
 merlin = { version = "3.0.0", default-features = false }
@@ -37,10 +37,9 @@ num-traits = { version = "0.2.19", default-features = false }
 rand = { version = "0.8.5", default-features = false }
 rand_chacha = { version = "0.3.1", default-features = false }
 scale-info = { version = "2.11.1", default-features = false }
-scale-info-derive = { git = "https://github.com/docknetwork/scale-info.git", branch = "master", default-features = false }
+scale-info-derive = { git = "https://github.com/docknetwork/scale-info.git", branch = "master" }
 schnorrkel = { version = "0.9.1", default-features = false }
-serde-big-array = { version = "0.3.0" }
-serde-hex = { version = "0.4.3", default-features = false, package = "hex" }
+serde-hex = { package = "hex", version = "0.4.3", default-features = false }
 serde_json = { version = "1.0.114", default-features = false }
 sha2 = { version = "0.10.8", default-features = false }
 smallvec = { version = "1.11.0", default-features = false }
@@ -50,7 +49,7 @@ serde = { version = "1.0.197", default-features = false }
 pallet-did = { path = "pallets/did", default-features = false }
 
 # Runtime
-infra-did-yosemite-runtime = { path = "runtime", default-features = false }
+infra-did-yosemite-runtime = { path = "runtime" }
 
 # Substrate Utils
 substrate-frame-rpc-system = { git = "https://github.com/InfraBlockchain/infrablockchain-substrate", branch = "feature/release-1.14.0", default-features = false }
