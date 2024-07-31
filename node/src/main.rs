@@ -20,10 +20,12 @@
 #![warn(unused_extern_crates)]
 
 mod chain_spec;
+mod fake_runtime_api;
 #[macro_use]
 mod service;
 mod cli;
 mod command;
+mod common;
 mod rpc;
 
 fn main() -> sc_cli::Result<()> {
